@@ -1,0 +1,15 @@
+Device: cpu-skylake-avx512-Intel(R) Xeon(R) Platinum 8370C CPU @ 2.80GHz (CPU OpenCL validation device)
+sma             MATCH
+ema             MATCH
+mean_reversion  MATCH
+breakout        MATCH
+rsi             MATCH
+macd            MATCH
+imbalance       MATCH
+market_making   MATCH
+pairs           MATCH
+execution       MATCH
+mlp             MATCH
+qlearning       MATCH
+selector        MATCH
+Device regression: 0 failures

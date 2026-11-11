@@ -1,0 +1,10 @@
+--------------------------------------------------------------------------
+Sorry!  You were supposed to get help about:
+    unavailable
+But I couldn't open the help file:
+    /usr/lib/x86_64-linux-gnu/pmix2/share/pmix/help-pcompress.txt: No such file or directory.  Sorry!
+--------------------------------------------------------------------------
+[40ba0ea36b4b:00009] Read -1, expected 20504, errno = 1
+{"type":"progress","fraction":1.000000,"events":"3000"}
+[40ba0ea36b4b:00008] Read -1, expected 305408, errno = 1
+{"type":"result","ok":true,"verified":true,"seconds":0.011071652,"ranks":2,"hash":"135feebeaef6a578"}

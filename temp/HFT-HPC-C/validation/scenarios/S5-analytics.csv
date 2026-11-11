@@ -1,0 +1,4 @@
+scenario,backend,kernel,seconds,value,detail
+S5,serial_naive,mlp,0.001057363,0.352721274,loss=0
+S5,serial_opt,mlp,0.000888853,0.352721274,loss=0
+S5,openmp,mlp,0.001225442,0.352721274,loss=0

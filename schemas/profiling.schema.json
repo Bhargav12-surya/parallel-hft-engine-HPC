@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Native profiling v1, unavailable counters may be null",
+  "type": "object",
+  "properties": {
+    "load_seconds": {"type": "number", "minimum": 0}, "compute_seconds": {"type": "number", "minimum": 0},
+    "feature_seconds": {"type": "number", "minimum": 0}, "matching_seconds": {"type": "number", "minimum": 0},
+    "mpi_communication_seconds": {"type": "number", "minimum": 0}, "cuda_h2d_seconds": {"type": "number", "minimum": 0},
+    "cuda_kernel_seconds": {"type": "number", "minimum": 0}, "cuda_d2h_seconds": {"type": "number", "minimum": 0},
+    "workers": {"type": "integer", "minimum": 1}, "ranks": {"type": "integer", "minimum": 1},
+    "peak_rss_bytes": {"type": ["integer", "null"], "minimum": 0},
+    "voluntary_context_switches": {"type": ["integer", "null"], "minimum": 0},
+    "involuntary_context_switches": {"type": ["integer", "null"], "minimum": 0}
+  }
+}

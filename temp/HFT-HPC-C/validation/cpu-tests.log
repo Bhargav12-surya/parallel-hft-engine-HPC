@@ -1,0 +1,10 @@
+Test project /workspace/scratch/15c45a925602/HFT-HPC-C/build-gui
+    Start 1: core_regression
+1/2 Test #1: core_regression ..................   Passed    0.68 sec
+    Start 2: benchmark_smoke
+2/2 Test #2: benchmark_smoke ..................   Passed    0.04 sec
+
+100% tests passed out of 2
+
+Total Test time (real) =   0.73 sec
+1502 checks, 0 failures

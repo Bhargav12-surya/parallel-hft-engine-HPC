@@ -1,0 +1,37 @@
+name: native-and-python
+on: [push, pull_request]
+jobs:
+  cpu:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: sudo apt-get update && sudo apt-get install -y libopenmpi-dev openmpi-bin
+      - run: python -m pip install -e '.[dev,science]'
+      - run: python scripts/build.py --mpi --test
+      - run: python -m ruff check hftlab tests scripts
+      - run: python -m pytest -q
+        env:
+          OMPI_ALLOW_RUN_AS_ROOT: '1'
+          OMPI_ALLOW_RUN_AS_ROOT_CONFIRM: '1'
+      - run: python -m hftlab demo --events 2000 --epochs 3 --output artifacts/ci-demo
+      - run: python -m build --no-isolation
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cpu-evidence
+          path: artifacts/
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -e '.[dev]'
+      - run: python scripts/build.py --test
+      - run: python -m pytest -q
+  # CUDA compilation and execution require a genuine GPU runner. No CPU job
+  # above claims to cover that gate; see docs/TESTING.md for the manual command.

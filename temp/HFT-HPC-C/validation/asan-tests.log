@@ -1,0 +1,9 @@
+Test project /workspace/scratch/15c45a925602/HFT-HPC-C/build-asan
+    Start 1: core_regression
+1/2 Test #1: core_regression ..................   Passed    3.63 sec
+    Start 2: benchmark_smoke
+2/2 Test #2: benchmark_smoke ..................   Passed    0.17 sec
+
+100% tests passed out of 2
+
+Total Test time (real) =   3.81 sec

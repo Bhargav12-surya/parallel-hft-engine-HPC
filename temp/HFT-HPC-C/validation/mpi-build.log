@@ -1,0 +1,16 @@
+[1/16] Building C object CMakeFiles/hft_core.dir/src/ipc/launcher.c.o
+[2/16] Building C object CMakeFiles/hft_core.dir/src/core/config.c.o
+[3/16] Building C object CMakeFiles/hft_core.dir/src/analytics/metrics.c.o
+[4/16] Building C object CMakeFiles/hft_core.dir/src/core/export.c.o
+[5/16] Building C object CMakeFiles/hft_core.dir/src/engines/opencl.c.o
+[6/16] Building C object CMakeFiles/hft_core.dir/src/engines/nvidia.c.o
+[7/16] Building C object CMakeFiles/hft_core.dir/src/analytics/linear.c.o
+[8/16] Building C object CMakeFiles/hft_core.dir/src/ai/models.c.o
+[9/16] Building C object CMakeFiles/hft_tests.dir/tests/test_main.c.o
+[10/16] Building C object CMakeFiles/hft_bench.dir/apps/bench.c.o
+[11/16] Building C object CMakeFiles/hft_mpi_worker.dir/apps/mpi_worker.c.o
+[12/16] Building C object CMakeFiles/hft_core.dir/src/engines/cpu.c.o
+[13/16] Linking C static library libhft_core.a
+[14/16] Linking C executable hft_tests
+[15/16] Linking C executable hft_bench
+[16/16] Linking C executable hft_mpi_worker

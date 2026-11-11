@@ -1,0 +1,69 @@
+{
+  "version": 3,
+  "configurePresets": [
+    {
+      "name": "release",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "cpu-only",
+      "inherits": "release",
+      "binaryDir": "${sourceDir}/build-cpu",
+      "cacheVariables": {
+        "HFT_MPI": "OFF",
+        "HFT_OPENCL": "OFF",
+        "HFT_GUI": "OFF"
+      }
+    },
+    {
+      "name": "asan",
+      "inherits": "cpu-only",
+      "binaryDir": "${sourceDir}/build-asan",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "HFT_SANITIZE": "ON"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "release",
+      "configurePreset": "release"
+    },
+    {
+      "name": "cpu-only",
+      "configurePreset": "cpu-only"
+    },
+    {
+      "name": "asan",
+      "configurePreset": "asan"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "release",
+      "configurePreset": "release",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "cpu-only",
+      "configurePreset": "cpu-only",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "asan",
+      "configurePreset": "asan",
+      "output": {
+        "outputOnFailure": true
+      }
+    }
+  ]
+}

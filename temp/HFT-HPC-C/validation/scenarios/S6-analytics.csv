@@ -1,0 +1,7 @@
+scenario,backend,kernel,seconds,value,detail
+S6,serial_naive,mlp,0.003558636,1,loss=1.05214808
+S6,serial_naive,qlearning,0.014472659,-27.481125,ok=1
+S6,serial_opt,mlp,0.003365452,1,loss=1.05214808
+S6,serial_opt,qlearning,0.013048235,-27.481125,ok=1
+S6,openmp,mlp,0.002385521,1,loss=1.05214808
+S6,openmp,qlearning,0.008195795,-27.481125,ok=1

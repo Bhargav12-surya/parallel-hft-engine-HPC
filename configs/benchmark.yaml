@@ -1,0 +1,12 @@
+schema_version: 1
+dataset: data/generated/benchmark.csv
+engine: threaded
+cpu_mode: multi-multi
+strategy: momentum
+threads: 4
+capital: 100000
+fee_bps: 1.0
+position_limit: 100
+max_order: 10
+timeout: 900
+output_dir: results/benchmark

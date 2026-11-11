@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "HFTMODEL1 numerical-export metadata v1",
+  "type": "object", "required": ["schema_version", "kind", "sha256", "native_model", "feature_names", "scaler"],
+  "properties": {
+    "schema_version": {"const": 1}, "export_format": {"const": "HFTMODEL1"},
+    "kind": {"enum": ["logistic", "mlp"]}, "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "native_model": {"type": "string"}, "feature_names": {"type": "array", "minItems": 6, "maxItems": 6, "items": {"type": "string"}},
+    "scaler": {"type": "object", "required": ["mean", "scale"], "properties": {
+      "mean": {"type": "array", "minItems": 6, "maxItems": 6, "items": {"type": "number"}},
+      "scale": {"type": "array", "minItems": 6, "maxItems": 6, "items": {"type": "number", "exclusiveMinimum": 0}}
+    }},
+    "split": {"type": "object"}, "validation": {"type": "object"}, "test": {"type": "object"}
+  }
+}

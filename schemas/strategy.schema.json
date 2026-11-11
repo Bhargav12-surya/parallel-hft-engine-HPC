@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Strategy selection/risk envelope v1 (strategy indicator defaults are native constants)",
+  "type": "object", "required": ["schema_version", "strategy"],
+  "properties": {
+    "schema_version": {"const": 1}, "strategy": {"enum": ["market-making", "momentum", "mean-reversion", "stat-arb", "ai", "hold"]},
+    "model": {"type": ["string", "null"]}, "position_limit": {"type": "integer", "minimum": 1},
+    "max_order": {"type": "integer", "minimum": 1}, "max_loss": {"type": "number", "minimum": 0}
+  }
+}

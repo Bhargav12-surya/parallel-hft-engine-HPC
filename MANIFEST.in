@@ -1,0 +1,9 @@
+include README.md LICENSE AGENTS.md Makefile CMakeLists.txt CMakePresets.json
+recursive-include native *.c *.h *.cu
+recursive-include configs *.json *.yaml
+recursive-include schemas *.json
+recursive-include docs *.md
+recursive-include docs/images *.svg
+recursive-include scripts *.py *.sh *.ps1
+recursive-include hftlab/tui *.tcss
+recursive-include tests *.py

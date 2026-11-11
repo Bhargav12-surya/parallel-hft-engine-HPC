@@ -1,0 +1,12 @@
+# Passed as keyword options to hftlab.ai.train_model (the train CLI exposes key options).
+kind: mlp
+backend: auto
+device: cpu
+epochs: 30
+seed: 42
+hidden_size: 16
+horizon: 4
+threshold: 0.00015
+max_samples: 20000
+batch_size: 64
+learning_rate: 0.01

@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Native simulation result v1",
+  "type": "object", "required": ["schema_version", "engine", "events_processed", "trades", "wall_seconds", "throughput", "pnl", "equity", "checksum"],
+  "properties": {
+    "schema_version": {"const": 1}, "engine": {"type": "string"}, "strategy": {"type": "string"},
+    "events_processed": {"type": "integer", "minimum": 1}, "trades": {"type": "integer", "minimum": 0},
+    "orders": {"type": "integer", "minimum": 0}, "wall_seconds": {"type": "number", "exclusiveMinimum": 0},
+    "throughput": {"type": "number", "exclusiveMinimum": 0}, "pnl": {"type": "number"}, "equity": {"type": "number"},
+    "fees": {"type": "number", "minimum": 0}, "drawdown": {"type": "number", "minimum": 0},
+    "checksum": {"type": "string", "pattern": "^[0-9a-f]{16}$"},
+    "profiling": {"type": "object"}, "latency_us": {"type": "object"},
+    "equity_curve": {"type": "array", "items": {"type": "object", "required": ["timestamp_ns", "equity"], "properties": {"timestamp_ns": {"type": "integer"}, "equity": {"type": "number"}, "pnl": {"type": "number"}}}}
+  }
+}

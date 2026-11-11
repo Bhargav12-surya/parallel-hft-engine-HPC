@@ -1,0 +1,30 @@
+[0/1] Re-running CMake...
+-- Configuring done (0.2s)
+-- Generating done (0.0s)
+-- Build files have been written to: /workspace/scratch/15c45a925602/HFT-HPC-C/build-gui
+[1/27] Building C object CMakeFiles/hft_core.dir/src/ipc/launcher.c.o
+[2/27] Building C object CMakeFiles/hft_core.dir/src/core/config.c.o
+[3/27] Building C object CMakeFiles/hft_core.dir/src/analytics/metrics.c.o
+[4/27] Building C object CMakeFiles/hft_core.dir/src/core/export.c.o
+[5/27] Building C object CMakeFiles/hft_core.dir/src/engines/opencl.c.o
+[6/27] Building C object CMakeFiles/hft_core.dir/src/engines/nvidia.c.o
+[7/27] Building C object CMakeFiles/hft_core.dir/src/analytics/linear.c.o
+[8/27] Building C object CMakeFiles/hft_core.dir/src/ai/models.c.o
+[9/27] Building C object CMakeFiles/hft_benchmark.dir/apps/bench.c.o
+[10/27] Building C object CMakeFiles/hft_bench.dir/apps/bench.c.o
+[11/27] Building C object CMakeFiles/example_contracts.dir/examples/contracts.c.o
+[12/27] Building C object CMakeFiles/example_run_engine.dir/examples/run_engine.c.o
+[13/27] Building C object CMakeFiles/example_risk.dir/examples/risk.c.o
+[14/27] Building C object CMakeFiles/hft_tests.dir/tests/test_main.c.o
+[15/27] Building C object CMakeFiles/example_train.dir/examples/train.c.o
+[16/27] Building C object CMakeFiles/hft_studio.dir/apps/studio.c.o
+[17/27] Building C object CMakeFiles/hft_core.dir/src/engines/cpu.c.o
+[18/27] Linking C static library libhft_core.a
+[19/27] Linking C static library libhft_benchmark.a
+[20/27] Linking C executable example_contracts
+[21/27] Linking C executable hft_bench
+[22/27] Linking C executable hft_tests
+[23/27] Linking C executable hft_studio
+[24/27] Linking C executable example_run_engine
+[25/27] Linking C executable example_train
+[26/27] Linking C executable example_risk

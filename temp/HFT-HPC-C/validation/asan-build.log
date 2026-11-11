@@ -1,0 +1,22 @@
+[1/22] Building C object CMakeFiles/hft_core.dir/src/ipc/launcher.c.o
+[2/22] Building C object CMakeFiles/hft_core.dir/src/analytics/metrics.c.o
+[3/22] Building C object CMakeFiles/hft_core.dir/src/core/config.c.o
+[4/22] Building C object CMakeFiles/hft_core.dir/src/analytics/linear.c.o
+[5/22] Building C object CMakeFiles/hft_core.dir/src/core/export.c.o
+[6/22] Building C object CMakeFiles/hft_core.dir/src/engines/nvidia.c.o
+[7/22] Building C object CMakeFiles/hft_core.dir/src/ai/models.c.o
+[8/22] Building C object CMakeFiles/hft_core.dir/src/engines/opencl.c.o
+[9/22] Building C object CMakeFiles/example_contracts.dir/examples/contracts.c.o
+[10/22] Building C object CMakeFiles/hft_bench.dir/apps/bench.c.o
+[11/22] Building C object CMakeFiles/example_run_engine.dir/examples/run_engine.c.o
+[12/22] Building C object CMakeFiles/example_risk.dir/examples/risk.c.o
+[13/22] Building C object CMakeFiles/hft_tests.dir/tests/test_main.c.o
+[14/22] Building C object CMakeFiles/example_train.dir/examples/train.c.o
+[15/22] Building C object CMakeFiles/hft_core.dir/src/engines/cpu.c.o
+[16/22] Linking C static library libhft_core.a
+[17/22] Linking C executable example_contracts
+[18/22] Linking C executable hft_bench
+[19/22] Linking C executable hft_tests
+[20/22] Linking C executable example_run_engine
+[21/22] Linking C executable example_risk
+[22/22] Linking C executable example_train

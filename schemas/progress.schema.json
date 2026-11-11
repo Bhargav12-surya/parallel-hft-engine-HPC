@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "JSONL native/supervisor event v1",
+  "type": "object", "required": ["schema_version", "type"],
+  "properties": {
+    "schema_version": {"const": 1}, "type": {"enum": ["progress", "result", "error", "state", "log"]},
+    "events_processed": {"type": "integer", "minimum": 0}, "total_events": {"type": "integer", "minimum": 0},
+    "elapsed_seconds": {"type": "number", "minimum": 0}, "trades": {"type": "integer", "minimum": 0},
+    "orders": {"type": "integer", "minimum": 0}, "pnl": {"type": "number"}, "equity": {"type": "number"},
+    "state": {"enum": ["CREATED", "VALIDATING", "QUEUED", "STARTING", "RUNNING", "FINALIZING", "COMPLETED", "FAILED", "CANCELLED"]},
+    "message": {"type": "string"}
+  }
+}

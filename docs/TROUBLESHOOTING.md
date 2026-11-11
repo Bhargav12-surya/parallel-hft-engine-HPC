@@ -1,0 +1,14 @@
+# Troubleshooting
+
+- **Native runner is not built:** run `python scripts/build.py --test` with the project virtual environment's Python. Set `HFTLAB_RUNNER` for another build directory. The installed Python wheel alone does not provide the C executable.
+- **Python package not found / wheel unavailable:** activate `.venv` and verify `python --version`. Use Python3.11 for this pinned environment. The Windows default Python3.15 is not the project's environment.
+- **C compiler missing:** install Visual Studio C++ Build Tools on Windows or build-essential on Linux. The Windows script discovers `vswhere.exe` and captures the x64 compiler environment. Existing VS installs without the C++ workload are insufficient.
+- **OpenMP unavailable:** inspect CMake's detection output. CPU sequential/native threads still work. Rebuild with a compiler OpenMP runtime; unavailable paths remain rejected.
+- **MPI unavailable:** install OpenMPI/MPICH or an appropriate supported native implementation, enable `--mpi`, and use its matching `mpiexec`. This host has no verified MPI toolkit/launcher. In containers, OpenMPI root-execution restrictions are separate from application errors.
+- **NVIDIA GPU visible, CUDA unavailable:** `nvidia-smi` only verifies driver/device recognition. Install a compatible CUDA toolkit and host compiler, configure `--cuda`, and run real kernels. RTX5050 compute12.0 may require a sufficiently recent toolkit/architecture configuration. No toolkit installation or CUDA execution was performed here.
+- **Model checksum mismatch:** regenerate or restore the native model and matching metadata. Do not edit numerical weights without rebuilding metadata. C runtime structurally validates weights; orchestration additionally verifies available SHA256 metadata before launch. Never use pickle artifacts as native models.
+- **Stat-arb rejects input:** at least two instruments are required. Adjacent instrument pairs are grouped; an unmatched last instrument has no trading partner. Costs and non-atomic fills can lose money.
+- **Parallel slower than sequential:** add independent instruments and enough events. Thread startup and serial matching in the hybrid can outweigh feature computation. Keep identical benchmark scope and repeats.
+- **Memory pressure:** use smaller event/instrument counts. Streaming generation does not imply streaming native execution. Hybrid feature/probability buffers consume additional per-event memory.
+- **Cancelled/timed out job:** inspect its `manifest.json` and `native.jsonl`. The supervisor terminates the process tree; the SQLite index retains FAILED/CANCELLED status and error. Failed partial outputs are not marked complete.
+- **Narrow terminal:** scroll forms and use keyboard shortcuts/command palette. For scripted or unsupported terminals use headless CLI commands.

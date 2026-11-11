@@ -1,0 +1,10 @@
+{
+  "version": 3,
+  "configurePresets": [
+    {"name": "cpu", "displayName": "Portable CPU and detected OpenMP", "generator": "Ninja", "binaryDir": "${sourceDir}/build", "cacheVariables": {"CMAKE_BUILD_TYPE": "Release", "HFT_ENABLE_OPENMP": "ON", "HFT_ENABLE_MPI": "OFF", "HFT_ENABLE_CUDA": "OFF"}},
+    {"name": "full", "inherits": "cpu", "binaryDir": "${sourceDir}/build-full", "cacheVariables": {"HFT_ENABLE_MPI": "ON", "HFT_ENABLE_CUDA": "ON"}},
+    {"name": "sanitized", "inherits": "cpu", "binaryDir": "${sourceDir}/build-asan", "cacheVariables": {"CMAKE_BUILD_TYPE": "Debug", "HFT_ENABLE_OPENMP": "OFF", "HFT_SANITIZER": "address"}}
+  ],
+  "buildPresets": [{"name": "cpu", "configurePreset": "cpu"}, {"name": "full", "configurePreset": "full"}],
+  "testPresets": [{"name": "cpu", "configurePreset": "cpu", "output": {"outputOnFailure": true}}]
+}

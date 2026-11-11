@@ -1,0 +1,6 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Native runner error JSONL v1",
+  "type": "object", "required": ["schema_version", "type", "message"],
+  "properties": {"schema_version": {"const": 1}, "type": {"const": "error"}, "message": {"type": "string"}}
+}

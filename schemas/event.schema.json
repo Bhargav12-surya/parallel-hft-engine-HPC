@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Canonical CSV row represented as typed JSON, event v1",
+  "type": "object", "additionalProperties": false,
+  "required": ["event_id", "timestamp_ns", "instrument_id", "event_type", "side", "price_ticks", "quantity", "order_id", "reference_order_id"],
+  "properties": {
+    "event_id": {"type": "integer", "minimum": 1, "maximum": 9223372036854775807},
+    "timestamp_ns": {"type": "integer", "minimum": 0, "maximum": 9223372036854775807},
+    "instrument_id": {"type": "integer", "minimum": 0, "maximum": 65535},
+    "event_type": {"enum": ["QUOTE", "LIMIT", "MARKET", "CANCEL", "MODIFY"]},
+    "side": {"enum": ["BUY", "SELL"]}, "price_ticks": {"type": "integer", "minimum": 0},
+    "quantity": {"type": "integer", "minimum": 0}, "order_id": {"type": "integer", "minimum": 0},
+    "reference_order_id": {"type": "integer", "minimum": 0}
+  }
+}

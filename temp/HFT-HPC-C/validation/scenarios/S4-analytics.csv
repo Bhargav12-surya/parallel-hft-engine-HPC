@@ -1,0 +1,7 @@
+scenario,backend,kernel,seconds,value,detail
+S4,serial_naive,covariance,0.000157495,0.975997928,
+S4,serial_naive,cpu_correlated_risk,0.02414023,0.714892122,VaR99=0.615387664;CVaR99=0.714892122;CG=12;residual=6.8611594e-10;ok=1
+S4,serial_opt,covariance,0.000109716,0.975997928,
+S4,serial_opt,cpu_correlated_risk,0.023108128,0.714892122,VaR99=0.615387664;CVaR99=0.714892122;CG=12;residual=6.8611594e-10;ok=1
+S4,openmp,covariance,0.000457189,0.975997928,
+S4,openmp,cpu_correlated_risk,0.013239634,0.714892122,VaR99=0.615387664;CVaR99=0.714892122;CG=12;residual=6.8611594e-10;ok=1

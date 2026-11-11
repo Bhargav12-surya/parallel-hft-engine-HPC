@@ -1,0 +1,7 @@
+scenario,backend,kernel,seconds,value,detail
+S7,openmp,critical,0.012895683,2,100000 total iterations
+S7,openmp,atomic,0.003728589,2,100000 total iterations
+S7,openmp,reduction,2.40269999e-05,2,100000 total iterations
+S7,threads,atomic_shared,0.004643096,2,100000 increments per thread
+S7,threads,false_sharing,0.000716078,2,100000 increments per thread
+S7,threads,padded_private,0.000688352,2,100000 increments per thread

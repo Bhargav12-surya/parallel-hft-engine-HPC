@@ -1,0 +1,16 @@
+schema_version: 1
+dataset: data/generated/demo.csv
+engine: sequential
+cpu_mode: single-single
+strategy: momentum
+threads: 4
+components: [cpu, openmp]
+capital: 100000
+fee_bps: 1.0
+slippage_ticks: 0
+latency_ns: 0
+position_limit: 100
+max_order: 10
+max_loss: 10000
+timeout: 300
+output_dir: results

@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Persisted HFT-LAB experiment manifest v1",
+  "type": "object", "required": ["schema_version", "id", "timestamp", "config", "status", "dataset_sha256", "runner_sha256", "output_dir"],
+  "properties": {
+    "schema_version": {"const": 1}, "id": {"type": "string", "pattern": "^[a-zA-Z0-9_-]{1,100}$"},
+    "timestamp": {"type": "string"}, "config": {"type": "object"},
+    "status": {"enum": ["QUEUED", "RUNNING", "COMPLETED", "FAILED", "CANCELLED"]},
+    "dataset_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}, "runner_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "output_dir": {"type": "string"}, "result": {"type": ["object", "null"]}, "error": {"type": "string"}
+  }
+}
