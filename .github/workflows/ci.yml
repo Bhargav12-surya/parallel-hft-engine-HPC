@@ -17,7 +17,7 @@ jobs:
           OMPI_ALLOW_RUN_AS_ROOT: '1'
           OMPI_ALLOW_RUN_AS_ROOT_CONFIRM: '1'
       - run: python -m hftlab demo --events 2000 --epochs 3 --output artifacts/ci-demo
-      - run: python -m build --no-isolation
+      - run: python -m build
       - uses: actions/upload-artifact@v4
         if: always()
         with:
