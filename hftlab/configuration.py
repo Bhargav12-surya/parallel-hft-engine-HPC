@@ -33,6 +33,8 @@ class SimulationConfig:
     schema_version: int = 1
 
     def validate(self) -> "SimulationConfig":
+        if not isinstance(self.dataset, (str, Path)) or not isinstance(self.output_dir, (str, Path)):
+            raise ValueError("dataset and output_dir must be paths")
         self.dataset = Path(self.dataset).expanduser().resolve()
         self.output_dir = Path(self.output_dir).expanduser().resolve()
         if not self.dataset.is_file():
@@ -43,28 +45,32 @@ class SimulationConfig:
             raise ValueError(f"Unknown CPU mode: {self.cpu_mode}")
         if self.strategy not in STRATEGIES:
             raise ValueError(f"Unknown strategy: {self.strategy}")
-        if not isinstance(self.threads, int) or not 1 <= self.threads <= 1024:
+        if type(self.threads) is not int or not 1 <= self.threads <= 1024:
             raise ValueError("threads must be an integer between 1 and 1024")
-        if self.schema_version != 1:
+        if type(self.schema_version) is not int or self.schema_version != 1:
             raise ValueError("Unsupported simulation schema version")
         finite_number(self.capital, "capital", minimum=0.01)
         finite_number(self.fee_bps, "fee_bps", maximum=10000)
         finite_number(self.max_loss, "max_loss")
         finite_number(self.timeout, "timeout", minimum=0.01, maximum=86400)
-        for name, lower, upper in (("slippage_ticks", 0, 1000000), ("latency_ns", 0, 10**15),
-                                   ("position_limit", 1, 10**9), ("max_order", 1, 10**9)):
+        for name, lower, upper in (("slippage_ticks", 0, 1000000), ("latency_ns", 0, 10**12),
+                                   ("position_limit", 1, 10**8), ("max_order", 1, 10**8)):
             value = getattr(self, name)
-            if not isinstance(value, int) or not lower <= value <= upper:
+            if type(value) is not int or not lower <= value <= upper:
                 raise ValueError(f"{name} must be an integer between {lower} and {upper}")
         if self.max_order > self.position_limit:
             raise ValueError("max_order cannot exceed position_limit")
+        if not isinstance(self.components, list) or any(not isinstance(part, str) for part in self.components):
+            raise ValueError("components must be a list of component names")
+        if len(set(self.components)) != len(self.components) or any(part not in COMPONENTS for part in self.components):
+            raise ValueError("Unknown or repeated hybrid component")
         if self.engine == "hybrid":
             if len(set(self.components)) != len(self.components) or len(self.components) < 2:
                 raise ValueError("Hybrid requires at least two distinct components")
             if any(part not in COMPONENTS for part in self.components):
                 raise ValueError("Unknown hybrid component")
         if self.strategy == "ai":
-            if self.model is None or not Path(self.model).is_file():
+            if not isinstance(self.model, (str, Path)) or not Path(self.model).is_file():
                 raise ValueError("AI strategy requires an existing exported native model (--model)")
             self.model = Path(self.model).resolve()
         return self
@@ -74,6 +80,8 @@ class SimulationConfig:
 
     @classmethod
     def from_dict(cls, value: dict) -> "SimulationConfig":
+        if not isinstance(value, dict) or "dataset" not in value:
+            raise ValueError("Simulation configuration requires a dataset")
         unknown = set(value) - set(cls.__dataclass_fields__)
         if unknown:
             raise ValueError(f"Unknown configuration fields: {', '.join(sorted(unknown))}")

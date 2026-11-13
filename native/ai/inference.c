@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
+#include <errno.h>
+#include <stdlib.h>
 void hft_features_update(HftFeatures *state, double price, int side, int quantity, double out[HFT_FEATURES]) {
     if (price <= 0) price = state->last > 0 ? state->last : 10000;
     uint64_t n = state->count;
@@ -24,12 +26,23 @@ static int read_values(FILE *file, double *values, size_t count) {
     for (size_t i = 0; i < count; ++i) if (fscanf(file,"%lf",&values[i]) != 1 || !isfinite(values[i]) || fabs(values[i]) > 1e15) return 0;
     return 1;
 }
+static int read_dimension(FILE *file, int maximum, int *value) {
+    char token[32], *end;
+    if (fscanf(file, "%31s", token) != 1 || token[0] == '-') return 0;
+    errno = 0;
+    long parsed = strtol(token, &end, 10);
+    if (end == token || *end || errno || parsed < 0 || parsed > maximum) return 0;
+    *value = (int)parsed;
+    return 1;
+}
 int hft_model_load(const char *path, HftModel *m, char *error) {
     memset(m,0,sizeof(*m));
     FILE *file = fopen(path,"rb");
     if (!file) { snprintf(error,HFT_ERROR_SIZE,"Cannot open native model"); return 0; }
     char magic[32]; int version, inputs, outputs;
-    if (fscanf(file,"%31s%d%d%d%d",magic,&version,&inputs,&m->hidden,&outputs) != 5 ||
+    if (fscanf(file,"%31s",magic) != 1 ||
+        !read_dimension(file, 1, &version) || !read_dimension(file, HFT_FEATURES, &inputs) ||
+        !read_dimension(file, HFT_HIDDEN_MAX, &m->hidden) || !read_dimension(file, 3, &outputs) ||
         strcmp(magic,"HFTMODEL") || version != 1 || inputs != HFT_FEATURES || outputs != 3 ||
         m->hidden < 0 || m->hidden > HFT_HIDDEN_MAX) goto invalid;
     if (!read_values(file,m->mean,HFT_FEATURES) || !read_values(file,m->scale,HFT_FEATURES)) goto invalid;

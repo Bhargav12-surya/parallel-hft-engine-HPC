@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://hftlab.local/schemas/simulation-v1",
-  "title": "HFT-LAB simulation configuration v1",
+  "title": "Parallel and GPU-Accelerated High-Frequency Trading Simulation Engine simulation configuration v1",
   "type": "object",
   "required": ["schema_version", "dataset"],
   "additionalProperties": false,

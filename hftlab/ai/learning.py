@@ -19,6 +19,7 @@ import sys
 from typing import Callable, Iterable
 
 from hftlab.datasets.market import EVENT_FIELDS, file_hash, iter_events, validate_dataset
+from hftlab.utilities import atomic_json as _atomic_json, temporary_path
 
 FEATURE_NAMES = ("return1", "momentum4", "momentum16", "volatility16", "imbalance", "spread")
 LABELS = ("SELL", "HOLD", "BUY")
@@ -26,15 +27,6 @@ LABELS = ("SELL", "HOLD", "BUY")
 
 class ModelError(ValueError):
     """An unsafe, incompatible, or invalid model/training input."""
-
-
-def _atomic_json(path: Path, value: dict | list) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    temporary = path.with_name(path.name + ".tmp")
-    with temporary.open("w", encoding="utf-8") as handle:
-        json.dump(value, handle, indent=2, sort_keys=True, allow_nan=False)
-        handle.write("\n")
-    os.replace(temporary, path)
 
 
 class FeatureState:
@@ -72,11 +64,11 @@ def extract_features(events: Iterable[dict]) -> list[list[float]]:
 
 def build_samples(dataset: str | Path, horizon: int = 4, threshold: float = .00015,
                   max_samples: int = 20000) -> dict:
-    if not isinstance(horizon, int) or not 1 <= horizon <= 10000:
+    if type(horizon) is not int or not 1 <= horizon <= 10000:
         raise ModelError("horizon must be in [1, 10000]")
     if not math.isfinite(threshold) or threshold < 0:
         raise ModelError("threshold must be finite and nonnegative")
-    if not isinstance(max_samples, int) or not 100 <= max_samples <= 1_000_000:
+    if type(max_samples) is not int or not 100 <= max_samples <= 1_000_000:
         raise ModelError("max_samples must be in [100, 1000000]")
     state = FeatureState()
     rows = []
@@ -107,7 +99,7 @@ def build_samples(dataset: str | Path, horizon: int = 4, threshold: float = .000
 def _split(rows: list[dict], train_fraction: float, validation_fraction: float, embargo: int) -> tuple[list, list, list, dict]:
     if not 0 < train_fraction < 1 or not 0 < validation_fraction < 1 or train_fraction + validation_fraction >= 1:
         raise ModelError("Train/validation fractions must leave a positive test fraction")
-    if not isinstance(embargo, int) or embargo < 0:
+    if type(embargo) is not int or embargo < 0:
         raise ModelError("embargo must be nonnegative")
     first_boundary = rows[int(len(rows) * train_fraction)]["index"]
     second_boundary = rows[int(len(rows) * (train_fraction + validation_fraction))]["index"]
@@ -375,13 +367,17 @@ def train_model(dataset: str | Path, output: str | Path, kind: str = "mlp", epoc
         raise ModelError(f"Unknown training parameters: {', '.join(kwargs)}")
     if kind not in ("mlp", "logistic"):
         raise ModelError("kind must be mlp or logistic")
-    if not isinstance(epochs, int) or not 1 <= epochs <= 10000:
+    if type(seed) is not int:
+        raise ModelError("seed must be an integer")
+    if type(embargo) is not int or embargo < 0:
+        raise ModelError("embargo must be a nonnegative integer")
+    if type(epochs) is not int or not 1 <= epochs <= 10000:
         raise ModelError("epochs must be in [1, 10000]")
-    if not isinstance(hidden_size, int) or not 1 <= hidden_size <= 128:
+    if type(hidden_size) is not int or not 1 <= hidden_size <= 128:
         raise ModelError("hidden_size must be in [1, 128]")
     if not 0 < learning_rate <= 1 or not math.isfinite(learning_rate):
         raise ModelError("learning_rate must be finite in (0,1]")
-    if not isinstance(batch_size, int) or not 1 <= batch_size <= 10000 or patience < 1:
+    if type(batch_size) is not int or not 1 <= batch_size <= 10000 or type(patience) is not int or patience < 1:
         raise ModelError("batch_size must be in [1,10000]; patience positive")
     if backend not in ("auto", "python", "torch", "sklearn"):
         raise ModelError("backend must be auto, python, torch, or sklearn")
@@ -452,7 +448,8 @@ def train_model(dataset: str | Path, output: str | Path, kind: str = "mlp", epoc
                 "training": {"epochs": epochs, "batch_size": batch_size, "learning_rate": learning_rate,
                              "horizon": horizon, "threshold": threshold, "max_samples": max_samples,
                              "events_read": samples["events_read"], "truncated": samples["truncated"],
-                             "optimizer": "LBFGS" if backend == "sklearn" else "Adam", "class_weight": "balanced-capped-5"},
+                             "optimizer": "LBFGS" if backend == "sklearn" else "Adam",
+                             "class_weight": "balanced" if backend == "sklearn" else "balanced-capped-5"},
                 "native_inference": "one-hidden-ReLU-softmax" if kind == "mlp" else "softmax-linear",
                 "limitations": ["Synthetic directional classification does not establish trading profitability.",
                                 "Baselines are direction classifiers; execution costs and profitability require simulation."]}
@@ -495,7 +492,7 @@ def export_holdout(dataset: str | Path, model_path: str | Path, output: str | Pa
     if not isinstance(start, int) or not isinstance(stop, int) or not 0 <= start < stop <= 1_000_000:
         raise ModelError("Invalid held-out chronological boundaries in model metadata")
     destination.parent.mkdir(parents=True, exist_ok=True)
-    temporary = destination.with_name(destination.name + ".tmp")
+    temporary = temporary_path(destination)
     known_limits = set()
     dropped_cancels = converted_replacements = selected_events = written_events = 0
     first_source_index = last_source_index = None
@@ -556,9 +553,12 @@ def _export_model(model: dict, destination: Path) -> None:
         values.append(" ".join(format(value, ".17g") for value in model["b1"]))
     values.extend(" ".join(format(value, ".17g") for value in row) for row in model["w2"])
     values.append(" ".join(format(value, ".17g") for value in model["b2"]))
-    temporary = destination.with_name(destination.name + ".tmp")
-    temporary.write_text("\n".join(values) + "\n", encoding="ascii")
-    os.replace(temporary, destination)
+    temporary = temporary_path(destination)
+    try:
+        temporary.write_text("\n".join(values) + "\n", encoding="ascii")
+        os.replace(temporary, destination)
+    finally:
+        temporary.unlink(missing_ok=True)
 
 
 def load_model(path: str | Path, verify_checksum: bool = True) -> dict:
@@ -569,11 +569,20 @@ def load_model(path: str | Path, verify_checksum: bool = True) -> dict:
         raise ModelError(f"Model file not found: {source}")
     if source.stat().st_size > 2 * 1024 * 1024:
         raise ModelError("Model file exceeds the 2 MiB safety limit")
-    metadata_paths = [source.with_suffix(source.suffix + ".json"), source.parent / "metadata.json"]
+    metadata_paths = [source.with_suffix(source.suffix + ".json")]
+    if source.name == "model.hftmodel":
+        metadata_paths.append(source.parent / "metadata.json")
     metadata = None
     for candidate in metadata_paths:
         if candidate.exists():
-            metadata = json.loads(candidate.read_text(encoding="utf-8"))
+            try:
+                metadata = json.loads(candidate.read_text(encoding="utf-8"))
+            except (UnicodeError, ValueError) as error:
+                raise ModelError(f"Invalid model metadata: {error}") from error
+            if not isinstance(metadata, dict) or type(metadata.get("schema_version")) is not int or metadata["schema_version"] != 1:
+                raise ModelError("Invalid model metadata schema")
+            if metadata.get("feature_names") != list(FEATURE_NAMES) or metadata.get("labels") != list(LABELS):
+                raise ModelError("Model metadata features/classes are incompatible")
             break
     if verify_checksum and metadata is not None and file_hash(source) != metadata.get("sha256"):
         raise ModelError("Model checksum does not match metadata")

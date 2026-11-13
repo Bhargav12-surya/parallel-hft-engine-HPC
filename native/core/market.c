@@ -52,12 +52,13 @@ int hft_dataset_load(const char *path, HftDataset *data, char *error) {
             !parse_u64(fields[8],&e.reference_id)) goto malformed;
         e.type = event_type(fields[3]);
         e.side = !strcmp(fields[4],"BUY") ? 0 : !strcmp(fields[4],"SELL") ? 1 : -1;
-        if (e.type < 0 || e.side < 0 || !e.id || e.timestamp_ns < last_ts ||
+        if (e.type < 0 || e.side < 0 || !e.id || e.id > INT64_MAX || e.timestamp_ns > INT64_MAX || e.timestamp_ns < last_ts ||
             instrument > 65535 || price > INT64_C(1000000000000) || quantity > 1000000000 ||
             e.order_id > INT64_MAX || e.reference_id > INT64_MAX ||
             (e.type != HFT_CANCEL && (!price || !quantity)) ||
             ((e.type == HFT_LIMIT || e.type == HFT_MARKET || e.type == HFT_MODIFY) && !e.order_id) ||
-            ((e.type == HFT_CANCEL || e.type == HFT_MODIFY) && !e.reference_id)) goto malformed;
+            ((e.type == HFT_CANCEL || e.type == HFT_MODIFY) && !e.reference_id) ||
+            ((e.type != HFT_CANCEL && e.type != HFT_MODIFY) && e.reference_id)) goto malformed;
         e.instrument = (int32_t)instrument; e.price = (int64_t)price; e.quantity = (int32_t)quantity;
         if (e.id <= last_id) ids_increasing = 0;
         last_ts = e.timestamp_ns; last_id = e.id;

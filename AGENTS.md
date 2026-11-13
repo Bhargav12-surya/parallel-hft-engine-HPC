@@ -1,4 +1,4 @@
-# HFT-LAB development
+# Parallel and GPU-Accelerated High-Frequency Trading Simulation Engine development
 
 - Keep all simulation/strategy matching and accounting in native C/CUDA. Python owns orchestration, datasets, training, reporting, and presentation.
 - Preserve `temp/` reference projects. Do not use historical reference logs as evidence for current tests.

@@ -1,0 +1,56 @@
+[
+{
+  "directory": "D:/HPC/build-full",
+  "command": "\"C:\\PROGRA~2\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\cl.exe\"  /nologo -DHFT_HAVE_CUDA -DHFT_HAVE_MPI -DHFT_HAVE_OPENMP -D_CRT_SECURE_NO_WARNINGS -ID:\\HPC\\native\\include -external:I\"C:\\Program Files (x86)\\Microsoft SDKs\\MPI\\Include\" -external:I\"C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v13.5\\include\" -external:I\"C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v13.5\\include\\cccl\" -external:W0 /DWIN32 /D_WINDOWS /O2 /Ob2 /DNDEBUG -std:c17 -MD /W4 /fp:strict -openmp /FoCMakeFiles\\hftlab_core.dir\\native\\core\\platform.c.obj /FdCMakeFiles\\hftlab_core.dir\\hftlab_core.pdb /FS -c D:\\HPC\\native\\core\\platform.c",
+  "file": "D:/HPC/native/core/platform.c",
+  "output": "D:/HPC/build-full/CMakeFiles/hftlab_core.dir/native/core/platform.c.obj"
+},
+{
+  "directory": "D:/HPC/build-full",
+  "command": "\"C:\\PROGRA~2\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\cl.exe\"  /nologo -DHFT_HAVE_CUDA -DHFT_HAVE_MPI -DHFT_HAVE_OPENMP -D_CRT_SECURE_NO_WARNINGS -ID:\\HPC\\native\\include -external:I\"C:\\Program Files (x86)\\Microsoft SDKs\\MPI\\Include\" -external:I\"C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v13.5\\include\" -external:I\"C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v13.5\\include\\cccl\" -external:W0 /DWIN32 /D_WINDOWS /O2 /Ob2 /DNDEBUG -std:c17 -MD /W4 /fp:strict -openmp /FoCMakeFiles\\hftlab_core.dir\\native\\core\\market.c.obj /FdCMakeFiles\\hftlab_core.dir\\hftlab_core.pdb /FS -c D:\\HPC\\native\\core\\market.c",
+  "file": "D:/HPC/native/core/market.c",
+  "output": "D:/HPC/build-full/CMakeFiles/hftlab_core.dir/native/core/market.c.obj"
+},
+{
+  "directory": "D:/HPC/build-full",
+  "command": "\"C:\\PROGRA~2\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\cl.exe\"  /nologo -DHFT_HAVE_CUDA -DHFT_HAVE_MPI -DHFT_HAVE_OPENMP -D_CRT_SECURE_NO_WARNINGS -ID:\\HPC\\native\\include -external:I\"C:\\Program Files (x86)\\Microsoft SDKs\\MPI\\Include\" -external:I\"C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v13.5\\include\" -external:I\"C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v13.5\\include\\cccl\" -external:W0 /DWIN32 /D_WINDOWS /O2 /Ob2 /DNDEBUG -std:c17 -MD /W4 /fp:strict -openmp /FoCMakeFiles\\hftlab_core.dir\\native\\core\\orderbook.c.obj /FdCMakeFiles\\hftlab_core.dir\\hftlab_core.pdb /FS -c D:\\HPC\\native\\core\\orderbook.c",
+  "file": "D:/HPC/native/core/orderbook.c",
+  "output": "D:/HPC/build-full/CMakeFiles/hftlab_core.dir/native/core/orderbook.c.obj"
+},
+{
+  "directory": "D:/HPC/build-full",
+  "command": "\"C:\\PROGRA~2\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\cl.exe\"  /nologo -DHFT_HAVE_CUDA -DHFT_HAVE_MPI -DHFT_HAVE_OPENMP -D_CRT_SECURE_NO_WARNINGS -ID:\\HPC\\native\\include -external:I\"C:\\Program Files (x86)\\Microsoft SDKs\\MPI\\Include\" -external:I\"C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v13.5\\include\" -external:I\"C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v13.5\\include\\cccl\" -external:W0 /DWIN32 /D_WINDOWS /O2 /Ob2 /DNDEBUG -std:c17 -MD /W4 /fp:strict -openmp /FoCMakeFiles\\hftlab_core.dir\\native\\core\\simulation.c.obj /FdCMakeFiles\\hftlab_core.dir\\hftlab_core.pdb /FS -c D:\\HPC\\native\\core\\simulation.c",
+  "file": "D:/HPC/native/core/simulation.c",
+  "output": "D:/HPC/build-full/CMakeFiles/hftlab_core.dir/native/core/simulation.c.obj"
+},
+{
+  "directory": "D:/HPC/build-full",
+  "command": "\"C:\\PROGRA~2\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\cl.exe\"  /nologo -DHFT_HAVE_CUDA -DHFT_HAVE_MPI -DHFT_HAVE_OPENMP -D_CRT_SECURE_NO_WARNINGS -ID:\\HPC\\native\\include -external:I\"C:\\Program Files (x86)\\Microsoft SDKs\\MPI\\Include\" -external:I\"C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v13.5\\include\" -external:I\"C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v13.5\\include\\cccl\" -external:W0 /DWIN32 /D_WINDOWS /O2 /Ob2 /DNDEBUG -std:c17 -MD /W4 /fp:strict -openmp /FoCMakeFiles\\hftlab_core.dir\\native\\core\\results.c.obj /FdCMakeFiles\\hftlab_core.dir\\hftlab_core.pdb /FS -c D:\\HPC\\native\\core\\results.c",
+  "file": "D:/HPC/native/core/results.c",
+  "output": "D:/HPC/build-full/CMakeFiles/hftlab_core.dir/native/core/results.c.obj"
+},
+{
+  "directory": "D:/HPC/build-full",
+  "command": "\"C:\\PROGRA~2\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\cl.exe\"  /nologo -DHFT_HAVE_CUDA -DHFT_HAVE_MPI -DHFT_HAVE_OPENMP -D_CRT_SECURE_NO_WARNINGS -ID:\\HPC\\native\\include -external:I\"C:\\Program Files (x86)\\Microsoft SDKs\\MPI\\Include\" -external:I\"C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v13.5\\include\" -external:I\"C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v13.5\\include\\cccl\" -external:W0 /DWIN32 /D_WINDOWS /O2 /Ob2 /DNDEBUG -std:c17 -MD /W4 /fp:strict -openmp /FoCMakeFiles\\hftlab_core.dir\\native\\ai\\inference.c.obj /FdCMakeFiles\\hftlab_core.dir\\hftlab_core.pdb /FS -c D:\\HPC\\native\\ai\\inference.c",
+  "file": "D:/HPC/native/ai/inference.c",
+  "output": "D:/HPC/build-full/CMakeFiles/hftlab_core.dir/native/ai/inference.c.obj"
+},
+{
+  "directory": "D:/HPC/build-full",
+  "command": "\"C:\\PROGRA~1\\NVIDIA GPU Computing Toolkit\\CUDA\\v13.5\\bin\\nvcc.exe\" -forward-unknown-to-host-compiler -DHFT_HAVE_CUDA -DHFT_HAVE_MPI -DHFT_HAVE_OPENMP -D_CRT_SECURE_NO_WARNINGS -ID:\\HPC\\native\\include -isystem \"C:\\Program Files (x86)\\Microsoft SDKs\\MPI\\Include\" -isystem \"C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v13.5\\include\" -isystem \"C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v13.5\\include\\cccl\" -D_WINDOWS -Xcompiler=\" /EHsc\" -Xcompiler=\"-O2 -Ob2\" -DNDEBUG -std=c++17 \"--generate-code=arch=compute_75,code=[compute_75,sm_75]\" -Xcompiler=-MD --fmad=false -x cu -c D:\\HPC\\native\\engines\\cuda\\compute.cu -o CMakeFiles\\hftlab_core.dir\\native\\engines\\cuda\\compute.cu.obj -Xcompiler=-FdCMakeFiles\\hftlab_core.dir\\hftlab_core.pdb,-FS",
+  "file": "D:/HPC/native/engines/cuda/compute.cu",
+  "output": "D:/HPC/build-full/CMakeFiles/hftlab_core.dir/native/engines/cuda/compute.cu.obj"
+},
+{
+  "directory": "D:/HPC/build-full",
+  "command": "\"C:\\PROGRA~2\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\cl.exe\"  /nologo -DHFT_HAVE_CUDA -DHFT_HAVE_MPI -DHFT_HAVE_OPENMP -D_CRT_SECURE_NO_WARNINGS -ID:\\HPC\\native\\include -external:I\"C:\\Program Files (x86)\\Microsoft SDKs\\MPI\\Include\" -external:I\"C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v13.5\\include\" -external:I\"C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v13.5\\include\\cccl\" -external:W0 /DWIN32 /D_WINDOWS /O2 /Ob2 /DNDEBUG -std:c17 -MD -openmp /FoCMakeFiles\\hftlab_runner.dir\\native\\runners\\main.c.obj /FdCMakeFiles\\hftlab_runner.dir\\ /FS -c D:\\HPC\\native\\runners\\main.c",
+  "file": "D:/HPC/native/runners/main.c",
+  "output": "D:/HPC/build-full/CMakeFiles/hftlab_runner.dir/native/runners/main.c.obj"
+},
+{
+  "directory": "D:/HPC/build-full",
+  "command": "\"C:\\PROGRA~2\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\cl.exe\"  /nologo -DHFT_HAVE_CUDA -DHFT_HAVE_MPI -DHFT_HAVE_OPENMP -D_CRT_SECURE_NO_WARNINGS -ID:\\HPC\\native\\include -external:I\"C:\\Program Files (x86)\\Microsoft SDKs\\MPI\\Include\" -external:I\"C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v13.5\\include\" -external:I\"C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v13.5\\include\\cccl\" -external:W0 /DWIN32 /D_WINDOWS /O2 /Ob2 /DNDEBUG -std:c17 -MD -openmp /FoCMakeFiles\\hftlab_native_tests.dir\\native\\tests\\test_core.c.obj /FdCMakeFiles\\hftlab_native_tests.dir\\ /FS -c D:\\HPC\\native\\tests\\test_core.c",
+  "file": "D:/HPC/native/tests/test_core.c",
+  "output": "D:/HPC/build-full/CMakeFiles/hftlab_native_tests.dir/native/tests/test_core.c.obj"
+}
+]

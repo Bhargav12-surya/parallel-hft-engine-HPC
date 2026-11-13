@@ -1,4 +1,4 @@
-# HFT-LAB
+# Parallel and GPU-Accelerated High-Frequency Trading Simulation Engine
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![C17](https://img.shields.io/badge/Language-C17-blue.svg)]()
@@ -28,6 +28,8 @@ The sequential engine is the correctness reference. Other engines preserve event
 
 ## Start on this Windows workspace
 
+For presentation preparation, folder explanations, all local test commands, a live demo sequence, and locations for changing names, use the [presentation runbook](docs/PRESENTATION_RUNBOOK.md). Fresh verification results are recorded in [TEST_RESULTS.md](docs/TEST_RESULTS.md).
+
 ```powershell
 .\.venv\Scripts\hftlab.exe
 # Equivalent development entry point:
@@ -36,7 +38,7 @@ The sequential engine is the correctness reference. Other engines preserve event
 
 The virtual environment uses the installed **Python 3.11**, rather than the machine's default Python 3.15. Native code is built with the installed Visual Studio C toolchain.
 
-![Authentic HFT-LAB terminal capture](docs/images/tui.svg)
+![Authentic Parallel and GPU-Accelerated High-Frequency Trading Simulation Engine terminal capture](docs/images/tui.svg)
 
 ## Install elsewhere
 
@@ -52,6 +54,15 @@ hftlab
 ```
 
 Windows: `powershell -File scripts/install.ps1` (requires Python 3.11 and Visual Studio C++ Build Tools). `python scripts/build.py --mpi` enables an installed MPI implementation. `--cuda` requires a compatible installed CUDA toolkit/compiler/device; it is never enabled by a Python GPU package alone.
+
+The installed CUDA 13.5 toolkit and Microsoft MPI runtime/SDK now support the
+full local build. For this RTX 5050, use:
+
+```powershell
+.\.venv\Scripts\python.exe scripts/build.py --cuda --cuda-arch 120 --mpi --build-dir build/full --test
+$env:HFTLAB_RUNNER = 'D:\HPC\build\full\hftlab_runner.exe'
+.\.venv\Scripts\hftlab.exe doctor
+```
 
 ## End-to-end demonstration
 
@@ -79,7 +90,7 @@ hftlab experiments list
 - Strategies: market making, momentum, mean reversion, paired statistical arbitrage, trained AI, and HOLD reference.
 - CPU modes: one worker pinned to one eligible logical CPU, multiple actual threads pinned to one logical CPU, one migratable worker, and multiple workers.
 - Genuine OpenMP over independent partitions; CPU+OpenMP hybrid separates parallel features from serial exchange matching.
-- Optional C MPI collective communication and CUDA `.cu` kernels. These hardware-dependent paths are clearly distinguished from locally verified CPU engines.
+- Optional C MPI collective communication and CUDA `.cu` kernels, with local multi-process MPI and RTX 5050 AI replay verified against sequential.
 - Streaming reproducible CSV and versioned binary market data, optional Parquet, eight synthetic scenarios, integrity manifests, and import validation.
 - Chronologically purged logistic/MLP training, train-only scalers, safe numerical exports, native C softmax inference, and cross-language parity tests. Standard-library training works offline; sklearn/PyTorch are optional training backends.
 - Nonblocking TUI, job cancellation/timeouts, SQLite experiment registry, JSONL events, engine comparisons, scaling experiments, and escaped offline reports.
@@ -106,7 +117,7 @@ python -m ruff check hftlab tests scripts
 python -m build --no-isolation
 ```
 
-[Implementation status](docs/IMPLEMENTATION_STATUS.md) and [test evidence](docs/TEST_RESULTS.md) distinguish tested, untested, partial, and unavailable functionality. CUDA execution and MPI communication are not claimed as tested on this Windows machine.
+[Implementation status](docs/IMPLEMENTATION_STATUS.md) and [test evidence](docs/TEST_RESULTS.md) distinguish tested, untested, partial, and unavailable functionality. The full Windows build now passes actual CUDA and multi-process MPI AI replay checks against sequential.
 
 ## Measurement and limits
 

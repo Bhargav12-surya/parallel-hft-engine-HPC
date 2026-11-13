@@ -1,0 +1,29 @@
+typedef char __nv_bool;
+#line 1713 "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v13.5\\include\\driver_types.h"
+enum cudaSharedMemoryMode {
+#line 1714 "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v13.5\\include\\driver_types.h"
+cudaSharedMemoryModeDefault,
+#line 1716 "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v13.5\\include\\driver_types.h"
+cudaSharedMemoryModeRequirePortable,
+#line 1717 "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v13.5\\include\\driver_types.h"
+cudaSharedMemoryModeAllowNonPortable,
+#line 1718 "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v13.5\\include\\driver_types.h"
+cudaSharedMemoryModeAllowOversizedSharedMemory,
+#line 1719 "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v13.5\\include\\driver_types.h"
+cudaSharedMemoryModePreferOversizedSharedMemory};
+#line 188 "C:\\Program Files (x86)\\Microsoft Visual Studio\\18\\BuildTools\\VC\\Tools\\MSVC\\14.51.36231\\include\\vcruntime.h"
+typedef unsigned long long size_t;
+#include "crt/device_runtime.h"
+#if !defined(__CUDABE__)
+#endif
+#if !defined(__CUDABE__)
+#endif
+#if !defined(__CUDABE__)
+#endif
+#include "common_functions.h"
+#if !defined(__CUDABE__)
+#endif
+#if !defined(__CUDABE__)
+#endif
+#if !defined(__CUDABE__)
+#endif

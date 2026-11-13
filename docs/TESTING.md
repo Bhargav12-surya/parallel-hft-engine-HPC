@@ -1,5 +1,9 @@
 # Testing
 
+For copyable Windows PowerShell commands and the presentation rehearsal sequence,
+see [PRESENTATION_RUNBOOK.md](PRESENTATION_RUNBOOK.md). The latest complete local
+verification was performed on 13 November 2026; see [TEST_RESULTS.md](TEST_RESULTS.md).
+
 ```bash
 python scripts/build.py --test
 python -m pytest -q
@@ -19,6 +23,6 @@ python scripts/build.py --debug --sanitize undefined --build-dir build/ubsan --t
 python scripts/build.py --debug --sanitize thread --no-openmp --build-dir build/tsan --test
 ```
 
-Do not combine AddressSanitizer and ThreadSanitizer. MSVC sanitizer flags are not implemented by the generic option. Linux sanitizers and optional-engine execution are separate unverified gates on this Windows host. CI config describes future Linux/MPI coverage; a workflow file is not evidence it has run.
+Do not combine AddressSanitizer and ThreadSanitizer. MSVC sanitizer flags are not implemented by the generic option. Linux sanitizers remain an unverified gate on this Windows host. Local CUDA 13.5 and Microsoft MPI execution now pass the hardware replay and comparison gates documented in [TEST_RESULTS.md](TEST_RESULTS.md). CI config describes Linux/MPI coverage; a workflow file is not evidence it has run.
 
 CUDA hardware gate: configure with `--cuda`, select that runner using `HFTLAB_RUNNER`, run CTest then `pytest tests/correctness -q` and real comparisons. A working driver or CPU CI job does not satisfy this gate. MPI likewise requires a matching compiled implementation and launcher, tested through actual multi-process replay.

@@ -39,9 +39,13 @@ def diagnose() -> dict:
         result.update(physical_processors=None, memory_bytes=None,
                       eligible_cpus=list(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else None)
     for name, args in (("cmake", ["cmake", "--version"]), ("compiler", ["cc", "--version"]),
-                       ("mpi", ["mpiexec", "--version"]), ("cuda_toolkit", ["nvcc", "--version"]),
+                       ("mpi", ["mpiexec", "-help" if os.name == "nt" else "--version"]),
+                       ("cuda_toolkit", ["nvcc", "--version"]),
                        ("gpu", ["nvidia-smi", "--query-gpu=name,driver_version,memory.total,compute_cap", "--format=csv,noheader"])):
         executable = shutil.which(args[0])
+        adjacent = Path(sys.executable).parent / (args[0] + (".exe" if os.name == "nt" else ""))
+        if executable is None and adjacent.is_file():
+            executable = str(adjacent)
         result[name] = _probe([executable] + args[1:]) if executable else {"status": "UNAVAILABLE", "detail": f"{args[0]} is not on PATH"}
     if result["compiler"]["status"] == "UNAVAILABLE" and os.name == "nt":
         vswhere = Path(os.environ.get("ProgramFiles(x86)", r"C:\Program Files (x86)")) / "Microsoft Visual Studio/Installer/vswhere.exe"

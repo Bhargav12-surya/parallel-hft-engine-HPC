@@ -6,6 +6,7 @@ import html
 import json
 from pathlib import Path
 
+from hftlab import APP_NAME
 from hftlab.utilities import atomic_json
 
 
@@ -32,15 +33,18 @@ def export_report(result: dict, path: Path | str) -> Path:
             for key, value in _flatten(result):
                 text = json.dumps(value, ensure_ascii=False) if isinstance(value, (dict, list)) else str(value)
                 # Neutralize spreadsheet formulas in user-controlled strings.
-                if isinstance(value, str) and text.startswith(("=", "+", "-", "@", "\t", "\r")):
+                if isinstance(value, str) and text.lstrip().startswith(("=", "+", "-", "@")):
                     text = "'" + text
+                if key.lstrip().startswith(("=", "+", "-", "@")):
+                    key = "'" + key
                 writer.writerow([key, text])
         return path
     if path.suffix.lower() == ".md":
-        rows = ["# HFT-LAB experiment", "", "Offline synthetic research results.", "", "| Metric | Value |", "|---|---|"]
+        rows = [f"# {APP_NAME} experiment", "", "Offline synthetic research results.", "", "| Metric | Value |", "|---|---|"]
         for key, value in _flatten(result):
-            clean = str(value).replace("|", "\\|").replace("\n", " ")
-            rows.append(f"| {key} | {clean} |")
+            clean = html.escape(str(value)).replace("|", "\\|").replace("\n", " ")
+            clean_key = html.escape(key).replace("|", "\\|").replace("\n", " ")
+            rows.append(f"| {clean_key} | {clean} |")
         path.write_text("\n".join(rows) + "\n", encoding="utf-8")
         return path
     if path.suffix.lower() != ".html":
@@ -78,6 +82,6 @@ def export_report(result: dict, path: Path | str) -> Path:
                     chart += f'<tr><td>{row["workers"]}</td><td>{html.escape(engine["engine"])}</td><td>{engine["timing"]["median_seconds"]:.6f}</td><td>{engine["speedup"]:.3f}</td></tr>'
         chart += '</table>'
     path.write_text(f'''<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>HFT-LAB research report</title><style>body{{font:15px system-ui,sans-serif;background:#0b111b;color:#cbd5e1;max-width:1100px;margin:40px auto;padding:20px}}h1{{color:#22d3ee}}p{{color:#94a3b8}}table{{border-collapse:collapse;width:100%}}td,th{{border:1px solid #263449;padding:10px;text-align:left;vertical-align:top}}pre{{white-space:pre-wrap;overflow-wrap:anywhere;margin:0}}svg{{max-width:100%;background:#101a29;border-radius:8px}}</style>
-<h1>HFT-LAB</h1><p>PARALLEL &amp; GPU-ACCELERATED TRADING SIMULATION · offline experiment report</p>{chart}<table>{rows}</table></html>''', encoding="utf-8")
+<title>{html.escape(APP_NAME)} research report</title><style>body{{font:15px system-ui,sans-serif;background:#0b111b;color:#cbd5e1;max-width:1100px;margin:40px auto;padding:20px}}h1{{color:#22d3ee}}p{{color:#94a3b8}}table{{border-collapse:collapse;width:100%}}td,th{{border:1px solid #263449;padding:10px;text-align:left;vertical-align:top}}pre{{white-space:pre-wrap;overflow-wrap:anywhere;margin:0}}svg{{max-width:100%;background:#101a29;border-radius:8px}}</style>
+<h1>{html.escape(APP_NAME)}</h1><p>Offline experiment report</p>{chart}<table>{rows}</table></html>''', encoding="utf-8")
     return path

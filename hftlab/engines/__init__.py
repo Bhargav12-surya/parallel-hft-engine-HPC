@@ -14,7 +14,12 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 def find_runner() -> Path:
     configured = os.environ.get("HFTLAB_RUNNER")
-    candidates = [Path(configured)] if configured else []
+    if configured:
+        runner = Path(configured).expanduser()
+        if not runner.is_file():
+            raise RuntimeError(f"Configured HFTLAB_RUNNER does not exist: {runner}")
+        return runner.resolve()
+    candidates = []
     suffix = ".exe" if os.name == "nt" else ""
     for directory in ("build/Release", "build", "build/cpu/Release", "build/cpu", "build/full/Release", "build/full", "bin"):
         candidates.append(PROJECT_ROOT / directory / ("hftlab_runner" + suffix))
@@ -33,8 +38,13 @@ def capabilities() -> dict:
         completed = subprocess.run([str(runner), "--capabilities"], capture_output=True, text=True,
                                    timeout=15, check=True)
         value = json.loads(completed.stdout)
-        if not isinstance(value, dict) or value.get("schema_version", 1) != 1:
+        if (not isinstance(value, dict) or type(value.get("schema_version")) is not int
+                or value["schema_version"] != 1 or not isinstance(value.get("engines"), dict)):
             raise ValueError("Invalid native capability schema")
+        for available in value["engines"].values():
+            if not isinstance(available, bool) and not (
+                    isinstance(available, dict) and isinstance(available.get("available"), bool)):
+                raise ValueError("Invalid native engine availability")
         value["runner"] = str(runner)
         return value
     except (RuntimeError, OSError, ValueError, subprocess.SubprocessError) as error:
@@ -65,7 +75,10 @@ def validate_engine(config: SimulationConfig, capability: dict | None = None) ->
 
 
 def mpi_launcher() -> str | None:
-    return shutil.which(os.environ.get("HFTLAB_MPI_LAUNCHER", "mpiexec")) or shutil.which("mpirun")
+    configured = os.environ.get("HFTLAB_MPI_LAUNCHER")
+    if configured:
+        return shutil.which(configured)
+    return shutil.which("mpiexec") or shutil.which("mpirun")
 
 
 def command(config: SimulationConfig, output: Path) -> list[str]:

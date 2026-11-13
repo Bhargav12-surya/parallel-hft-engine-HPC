@@ -45,6 +45,7 @@ def build_environment() -> dict[str, str]:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--cuda", action="store_true")
+    parser.add_argument("--cuda-arch", help="CMake CUDA architecture list, e.g. 120 or 86;89")
     parser.add_argument("--mpi", action="store_true")
     parser.add_argument("--no-openmp", action="store_true")
     parser.add_argument("--debug", action="store_true")
@@ -52,6 +53,8 @@ def main() -> int:
     parser.add_argument("--build-dir", type=Path, default=ROOT / "build")
     parser.add_argument("--test", action="store_true")
     args = parser.parse_args()
+    if args.cuda_arch and not args.cuda:
+        parser.error("--cuda-arch requires --cuda")
     environment = build_environment()
     cmake = find_tool("cmake")
     configure = [cmake, "-S", str(ROOT), "-B", str(args.build_dir), "-G", "Ninja",
@@ -59,9 +62,10 @@ def main() -> int:
                  "-DHFT_ENABLE_OPENMP=" + ("OFF" if args.no_openmp else "ON"),
                  "-DHFT_ENABLE_MPI=" + ("ON" if args.mpi else "OFF"),
                  "-DHFT_ENABLE_CUDA=" + ("ON" if args.cuda else "OFF"),
-                 "-DCMAKE_MAKE_PROGRAM=" + find_tool("ninja")]
-    if args.sanitize:
-        configure.append("-DHFT_SANITIZER=" + args.sanitize)
+                 "-DCMAKE_MAKE_PROGRAM=" + find_tool("ninja"),
+                 "-DHFT_SANITIZER=" + (args.sanitize or "")]
+    if args.cuda_arch:
+        configure.append("-DCMAKE_CUDA_ARCHITECTURES=" + args.cuda_arch)
     subprocess.run(configure, env=environment, check=True, cwd=ROOT)
     subprocess.run([cmake, "--build", str(args.build_dir), "--parallel"], env=environment, check=True, cwd=ROOT)
     if args.test:

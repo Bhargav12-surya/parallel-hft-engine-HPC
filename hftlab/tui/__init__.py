@@ -1,4 +1,4 @@
-"""Interactive HFT-LAB terminal application."""
+"""Interactive terminal application for offline trading simulation."""
 
 
 def run_app() -> None:

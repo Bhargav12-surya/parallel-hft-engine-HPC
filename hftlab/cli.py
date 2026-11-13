@@ -7,7 +7,7 @@ import sys
 from dataclasses import replace
 from pathlib import Path
 
-from hftlab import __version__
+from hftlab import APP_NAME, __version__
 from hftlab.configuration import CPU_MODES, ENGINES, STRATEGIES, SimulationConfig
 from hftlab.utilities import atomic_json, read_json
 
@@ -41,7 +41,10 @@ def _config(args: argparse.Namespace) -> SimulationConfig:
     if args.config:
         if args.config.suffix.lower() in (".yaml", ".yml"):
             import yaml
-            values = yaml.safe_load(args.config.read_text(encoding="utf-8"))
+            try:
+                values = yaml.safe_load(args.config.read_text(encoding="utf-8"))
+            except yaml.YAMLError as error:
+                raise ValueError(f"Invalid YAML configuration: {error}") from error
             if not isinstance(values, dict):
                 raise ValueError("Configuration must be a mapping")
         else:
@@ -56,8 +59,8 @@ def _config(args: argparse.Namespace) -> SimulationConfig:
 
 
 def parser() -> argparse.ArgumentParser:
-    root = argparse.ArgumentParser(prog="hftlab", description="HFT-LAB: offline native trading simulation and HPC research")
-    root.add_argument("--version", action="version", version=f"HFT-LAB {__version__}")
+    root = argparse.ArgumentParser(prog="hftlab", description=f"{APP_NAME}: offline native simulation and HPC research")
+    root.add_argument("--version", action="version", version=f"{APP_NAME} {__version__}")
     commands = root.add_subparsers(dest="command")
     commands.add_parser("doctor", help="Probe actual binaries, hardware, and optional runtimes").add_argument("--json", action="store_true")
     generate = commands.add_parser("generate", help="Stream a reproducible synthetic market dataset")
@@ -165,8 +168,11 @@ def main(argv: list[str] | None = None) -> int:
                 return 1
         elif args.command == "scaling":
             from hftlab.benchmarks import scaling
-            _print(scaling(_config(args), [int(value) for value in args.workers.split(",")], weak=args.weak,
-                           repeats=args.repeats, events_per_worker=args.events_per_worker, output=args.output))
+            result = scaling(_config(args), [int(value) for value in args.workers.split(",")], weak=args.weak,
+                             repeats=args.repeats, events_per_worker=args.events_per_worker, output=args.output)
+            _print(result)
+            if result["status"] != "COMPLETED":
+                return 1
         elif args.command == "report":
             from hftlab.experiments import ExperimentRegistry
             from hftlab.reports import export_report
@@ -213,7 +219,7 @@ def main(argv: list[str] | None = None) -> int:
         print("Cancelled.", file=sys.stderr)
         return 130
     except (ValueError, RuntimeError, OSError, TimeoutError, ImportError) as error:
-        print(f"HFT-LAB: {error}", file=sys.stderr)
+        print(f"{APP_NAME}: {error}", file=sys.stderr)
         return 1
 
 
@@ -230,6 +236,8 @@ def run_demo(output: Path, events: int = 10000, epochs: int = 15) -> dict:
     data = generate_dataset(dataset, events=events, instruments=4, seed=42, scenario="predictable")
     config = SimulationConfig(dataset=dataset, output_dir=output / "results")
     comparison = benchmark(config, repeats=3, engines=list(ENGINES), output=output / "benchmark.json")
+    if comparison["status"] != "COMPLETED":
+        raise RuntimeError("Demo benchmark failed its execution/correctness checks; inspect benchmark.json")
     logistic = train_model(dataset, output / "logistic", kind="logistic", epochs=epochs, seed=42)
     model = train_model(dataset, output / "mlp", kind="mlp", epochs=epochs, seed=42)
     holdout = export_holdout(dataset, model["native_model"], output / "heldout.csv")

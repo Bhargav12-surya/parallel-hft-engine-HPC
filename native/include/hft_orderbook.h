@@ -16,11 +16,17 @@ typedef struct {
 } HftBook;
 typedef void (*HftFillFn)(void *context, const HftOrder *maker,
                           const HftOrder *taker, int64_t price, int quantity);
+/* Return 1 to fill, 0 to reject the remaining taker quantity, or -1 to
+ * cancel the maker and continue matching the taker. */
+typedef int (*HftFillCheckFn)(void *context, const HftOrder *maker,
+                             const HftOrder *taker, int64_t price, int quantity);
 int hft_book_init(HftBook *book);
 void hft_book_destroy(HftBook *book);
 int hft_book_cancel(HftBook *book, uint64_t id);
 int hft_book_submit(HftBook *book, HftOrder order, int market,
                     HftFillFn fill, void *context);
+int hft_book_submit_checked(HftBook *book, HftOrder order, int market,
+                            HftFillCheckFn check, HftFillFn fill, void *context);
 const HftOrder *hft_book_best(const HftBook *book, int side);
 int hft_book_validate(const HftBook *book);
 #endif

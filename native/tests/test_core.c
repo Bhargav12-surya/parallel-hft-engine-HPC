@@ -100,4 +100,46 @@ static int simulation_test(void){
     free(baseline.instruments);c.engine="sequential";c.cpu_mode="multi-single";c.strategy="hold";memset(&baseline,0,sizeof(baseline));CHECK(hft_run(&c,&data,NULL,&baseline));
     CHECK(baseline.instruments[0].trades==0&&baseline.instruments[0].pnl==0&&baseline.portfolio_drawdown==0);free(baseline.instruments);return 0;
 }
-int main(void){CHECK(!book_test());CHECK(!portfolio_test());CHECK(!feature_test());CHECK(!model_test());CHECK(!parser_test());CHECK(!simulation_test());puts("PASS book priority/partial/cancel/growth, accounting, causal AI, model stability, parser robustness, CPU/OpenMP/hybrid replay, chronological drawdown");return 0;}
+static int depth_risk_test(void) {
+    HftEvent events[20];
+    memset(events, 0, sizeof(events));
+    for (int i = 0; i < 20; ++i) {
+        events[i].id = (uint64_t)i + 1;
+        events[i].timestamp_ns = (uint64_t)i;
+        events[i].type = HFT_QUOTE;
+        events[i].price = 10000;
+        events[i].quantity = 1;
+    }
+    events[17].type = HFT_LIMIT;
+    events[17].side = 1;
+    events[17].order_id = 1;
+    events[17].price = INT64_C(1000000000000);
+    events[17].quantity = 10;
+    HftDataset data = {events, 20, 1};
+    HftModel model;
+    memset(&model, 0, sizeof(model));
+    for (int i = 0; i < HFT_FEATURES; ++i) model.scale[i] = 1;
+    model.b2[2] = 10;
+    HftConfig config;
+    memset(&config, 0, sizeof(config));
+    config.engine = "sequential";
+    config.cpu_mode = "multi-single";
+    config.strategy = "ai";
+    config.capital = 100000;
+    config.tick_value = .01;
+    config.fee_bps = 1;
+    config.max_order = 10;
+    config.position_limit = 100;
+    config.max_loss = 10000;
+    config.quiet = 1;
+    HftResult result;
+    memset(&result, 0, sizeof(result));
+    CHECK(hft_run(&config, &data, &model, &result));
+    CHECK(result.instruments[0].position == 1);
+    CHECK(result.instruments[0].trades == 1);
+    CHECK(result.instruments[0].rejected > 0);
+    CHECK(result.instruments[0].pnl > -config.capital);
+    free(result.instruments);
+    return 0;
+}
+int main(void){CHECK(!book_test());CHECK(!portfolio_test());CHECK(!feature_test());CHECK(!model_test());CHECK(!parser_test());CHECK(!simulation_test());CHECK(!depth_risk_test());puts("PASS book priority/partial/cancel/growth, accounting, causal AI, model stability, parser robustness, CPU/OpenMP/hybrid replay, chronological drawdown, depth-aware fill risk");return 0;}

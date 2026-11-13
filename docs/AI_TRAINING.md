@@ -1,6 +1,6 @@
 # Offline AI training and native inference
 
-HFT-LAB trains actual three-class classifiers and exports their learned numerical
+Parallel and GPU-Accelerated High-Frequency Trading Simulation Engine trains actual three-class classifiers and exports their learned numerical
 weights for C inference. AI is a trading strategy; it uses the same sequential,
 threaded, OpenMP and other available engine adapters as classical strategies.
 Python does not supply precomputed BUY/SELL labels to the native simulation.

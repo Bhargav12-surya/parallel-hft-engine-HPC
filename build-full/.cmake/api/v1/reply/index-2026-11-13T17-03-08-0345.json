@@ -23,7 +23,45 @@
 			"suffix" : "msvc1"
 		}
 	},
-	"objects" : [],
+	"objects" : 
+	[
+		{
+			"jsonFile" : "codemodel-v2-e182b20f2e43fa0a75da.json",
+			"kind" : "codemodel",
+			"version" : 
+			{
+				"major" : 2,
+				"minor" : 10
+			}
+		},
+		{
+			"jsonFile" : "cache-v2-91e23f4cfb9167575bcc.json",
+			"kind" : "cache",
+			"version" : 
+			{
+				"major" : 2,
+				"minor" : 0
+			}
+		},
+		{
+			"jsonFile" : "cmakeFiles-v1-b2a123891c97c43eb4e2.json",
+			"kind" : "cmakeFiles",
+			"version" : 
+			{
+				"major" : 1,
+				"minor" : 1
+			}
+		},
+		{
+			"jsonFile" : "toolchains-v1-df05ce71eb1f2b65ea13.json",
+			"kind" : "toolchains",
+			"version" : 
+			{
+				"major" : 1,
+				"minor" : 1
+			}
+		}
+	],
 	"reply" : 
 	{
 		"client-vscode" : 
@@ -52,16 +90,40 @@
 				"responses" : 
 				[
 					{
-						"error" : "no buildsystem generated"
+						"jsonFile" : "cache-v2-91e23f4cfb9167575bcc.json",
+						"kind" : "cache",
+						"version" : 
+						{
+							"major" : 2,
+							"minor" : 0
+						}
 					},
 					{
-						"error" : "no buildsystem generated"
+						"jsonFile" : "codemodel-v2-e182b20f2e43fa0a75da.json",
+						"kind" : "codemodel",
+						"version" : 
+						{
+							"major" : 2,
+							"minor" : 10
+						}
 					},
 					{
-						"error" : "no buildsystem generated"
+						"jsonFile" : "toolchains-v1-df05ce71eb1f2b65ea13.json",
+						"kind" : "toolchains",
+						"version" : 
+						{
+							"major" : 1,
+							"minor" : 1
+						}
 					},
 					{
-						"error" : "no buildsystem generated"
+						"jsonFile" : "cmakeFiles-v1-b2a123891c97c43eb4e2.json",
+						"kind" : "cmakeFiles",
+						"version" : 
+						{
+							"major" : 1,
+							"minor" : 1
+						}
 					}
 				]
 			}

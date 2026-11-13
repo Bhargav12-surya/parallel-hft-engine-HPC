@@ -24,6 +24,25 @@ python scripts/build.py --cuda --mpi --build-dir build/full --test
 
 Set `HFTLAB_RUNNER` to an absolute executable path when selecting a nondefault build directory. MPI needs a launcher on PATH (`HFTLAB_MPI_LAUNCHER` can override its name). Use the MPI implementation discovered by CMake, not an unrelated launcher. CUDA requires `nvcc`, a supported host compiler, GPU architecture selection when needed, and a compatible driver. Installing PyTorch does not build the native CUDA backend.
 
+The local RTX 5050 has compute capability 12.0. With CUDA 13.5 and the Microsoft
+MPI runtime plus SDK installed, build for architecture `120` and select the full
+runner in the current PowerShell session:
+
+```powershell
+.\.venv\Scripts\python.exe scripts/build.py --cuda --cuda-arch 120 --mpi --build-dir build/full --test
+$env:HFTLAB_RUNNER = 'D:\HPC\build\full\hftlab_runner.exe'
+.\.venv\Scripts\hftlab.exe doctor
+.\.venv\Scripts\python.exe -m pytest -q -ra
+```
+
+`--cuda-arch` passes `CMAKE_CUDA_ARCHITECTURES` directly to CMake and overrides an
+existing cached selection. Other GPUs need their corresponding architecture.
+For multiple architectures, quote the list, for example `--cuda-arch "86;89"`.
+Without this option, CMake uses its configured/compiler default. CUDA is enabled
+before the core target is created so the target receives these defaults during
+its first configuration. See [CMake's architecture documentation](https://cmake.org/cmake/help/latest/variable/CMAKE_CUDA_ARCHITECTURES.html)
+and [NVIDIA's compute-capability table](https://developer.nvidia.com/cuda/gpus).
+
 Optional packages:
 
 ```bash

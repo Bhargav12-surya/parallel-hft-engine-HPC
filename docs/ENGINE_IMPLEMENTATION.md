@@ -18,8 +18,8 @@ Each processed event records the whole group's equity change, including both pai
 |---|---|---|
 | CPU computing | OS threads or one native worker over independent groups | Four modes tested |
 | OpenMP shared memory | `omp parallel for` over independent groups; actual runtime team size recorded | Tested with MSVC OpenMP |
-| MPI distributed memory | Real `MPI_Init`, Bcast/Allreduce/Reduce/Gather; rank ownership of groups | Source implemented; toolkit/launcher absent here |
-| CUDA GPU | `.cu` per-event causal predecessor features and numerical MLP/logistic inference; CPU exchange matching | Source implemented; toolkit absent here |
+| MPI distributed memory | Real `MPI_Init`, Bcast/Allreduce/Reduce/Gather; rank ownership of groups | Local Microsoft MPI AI replay and 4-rank classical comparison verified |
+| CUDA GPU | `.cu` per-event causal predecessor features and numerical MLP/logistic inference; CPU exchange matching | CUDA 13.5 / RTX 5050 features, MLP replay and classical comparison verified; GPU logistic path remains a separate gate |
 | Hybrid | Explicit feature/signal/matching phases across selected components | CPU+OpenMP tested; remaining hardware-dependent combinations unverified |
 
 CPU modes are `single-single` (one worker pinned to one eligible logical processor), `single-multi` (real workers share that pinned processor), `multi-single` (one migratable worker), and `multi-multi` (multiple eligible workers). One migratable worker is not simultaneous multicore execution. Worker counts are capped by independent groups and resources. Windows uses native thread APIs; Unix uses pthreads.

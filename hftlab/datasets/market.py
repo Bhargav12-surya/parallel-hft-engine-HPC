@@ -18,6 +18,8 @@ import tempfile
 from collections import Counter, deque
 from typing import Iterator
 
+from hftlab.utilities import atomic_json as _atomic_json, temporary_path
+
 EVENT_FIELDS = ("event_id", "timestamp_ns", "instrument_id", "event_type", "side",
                 "price_ticks", "quantity", "order_id", "reference_order_id")
 SCENARIOS = ("normal", "high-volatility", "high-liquidity", "low-liquidity",
@@ -28,19 +30,12 @@ _HEADER = struct.Struct("<8sIIQ32s")
 _RECORD = struct.Struct("<QQIBBqQQQ")
 _MAGIC = b"HFTDATA\x00"
 MAX_INTEGER = (1 << 63) - 1
+MAX_PRICE = 10**12
+MAX_QUANTITY = 10**9
 
 
 class DatasetError(ValueError):
     """A dataset violates its explicit interchange contract."""
-
-
-def _atomic_json(path: Path, value: dict) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    temporary = path.with_name(path.name + ".tmp")
-    with temporary.open("w", encoding="utf-8") as handle:
-        json.dump(value, handle, indent=2, sort_keys=True, allow_nan=False)
-        handle.write("\n")
-    os.replace(temporary, path)
 
 
 def file_hash(path: str | Path) -> str:
@@ -66,7 +61,7 @@ def _normalise(row: dict, line: int) -> dict:
                 number = int(raw)
             except (ValueError, TypeError, OverflowError) as exc:
                 raise DatasetError(f"Row {line}: {field} must be an integer") from exc
-            if isinstance(raw, float) and raw != number:
+            if isinstance(raw, bool) or isinstance(raw, float) and raw != number:
                 raise DatasetError(f"Row {line}: fractional {field}")
             if number < 0 or number > MAX_INTEGER:
                 raise DatasetError(f"Row {line}: {field} outside nonnegative int64 range")
@@ -79,6 +74,8 @@ def _normalise(row: dict, line: int) -> dict:
         raise DatasetError(f"Row {line}: event ID must be positive")
     if event["instrument_id"] > 65535:
         raise DatasetError(f"Row {line}: instrument ID exceeds 65535")
+    if event["price_ticks"] > MAX_PRICE or event["quantity"] > MAX_QUANTITY:
+        raise DatasetError(f"Row {line}: price or quantity exceeds native limits")
     if event["event_type"] != "CANCEL":
         if event["price_ticks"] <= 0 or event["quantity"] <= 0:
             raise DatasetError(f"Row {line}: price and quantity must be positive")
@@ -207,13 +204,15 @@ def generate_dataset(path: str | Path, events: int = 10000, instruments: int = 4
     QUOTE refreshes native external bid/ask liquidity; LIMIT/MARKET/CANCEL add
     actual exchange flow. Predictable is deliberately educational synthetic data.
     """
-    if not isinstance(events, int) or not 1 <= events <= 100_000_000:
+    if type(events) is not int or not 1 <= events <= 100_000_000:
         raise DatasetError("events must be an integer in [1, 100000000]")
-    if not isinstance(instruments, int) or not 1 <= instruments <= 65536:
+    if type(instruments) is not int or not 1 <= instruments <= 65536:
         raise DatasetError("instruments must be in [1, 65536]")
+    if type(seed) is not int:
+        raise DatasetError("seed must be an integer")
     if scenario not in SCENARIOS:
         raise DatasetError(f"scenario must be one of {', '.join(SCENARIOS)}")
-    initial_price = int(kwargs.pop("initial_price", 10000))
+    initial_price = kwargs.pop("initial_price", 10000)
     volatility = float(kwargs.pop("volatility", 2.0))
     intensity = float(kwargs.pop("arrival_intensity", 50000.0))
     correlation = float(kwargs.pop("correlation", 0.75 if scenario == "correlated" else 0.25))
@@ -222,8 +221,8 @@ def generate_dataset(path: str | Path, events: int = 10000, instruments: int = 4
     shock_fraction = float(kwargs.pop("shock_fraction", 0.04))
     if kwargs:
         raise DatasetError(f"Unknown generation parameters: {', '.join(kwargs)}")
-    if initial_price < 100 or not math.isfinite(volatility) or volatility < 0:
-        raise DatasetError("initial_price must be >=100; volatility finite and nonnegative")
+    if type(initial_price) is not int or not 100 <= initial_price <= MAX_PRICE or not math.isfinite(volatility) or volatility < 0:
+        raise DatasetError("initial_price must be an integer in [100, 1000000000000]; volatility finite and nonnegative")
     if not math.isfinite(intensity) or intensity <= 0 or not 0 <= correlation <= 1:
         raise DatasetError("arrival intensity must be positive; correlation in [0,1]")
     if not 0 <= buy_imbalance <= 1 or not 0 <= cancel_rate <= .5:
@@ -232,22 +231,24 @@ def generate_dataset(path: str | Path, events: int = 10000, instruments: int = 4
         raise DatasetError("shock_fraction must be in [0,1)")
     destination = Path(path).resolve()
     if destination.suffix.lower() in (".bin", ".hft", ".hftdata"):
-        temporary_csv = destination.with_name(destination.name + ".source.csv")
-        manifest = generate_dataset(temporary_csv, events, instruments, seed, scenario,
-                                    initial_price=initial_price, volatility=volatility,
-                                    arrival_intensity=intensity, correlation=correlation,
-                                    buy_imbalance=buy_imbalance, cancel_rate=cancel_rate,
-                                    shock_fraction=shock_fraction)
-        export_binary(temporary_csv, destination)
-        temporary_csv.unlink()
-        Path(str(temporary_csv) + ".manifest.json").unlink(missing_ok=True)
+        temporary_csv = temporary_path(destination, suffix=".csv")
+        try:
+            manifest = generate_dataset(temporary_csv, events, instruments, seed, scenario,
+                                        initial_price=initial_price, volatility=volatility,
+                                        arrival_intensity=intensity, correlation=correlation,
+                                        buy_imbalance=buy_imbalance, cancel_rate=cancel_rate,
+                                        shock_fraction=shock_fraction)
+            export_binary(temporary_csv, destination)
+        finally:
+            temporary_csv.unlink(missing_ok=True)
+            Path(str(temporary_csv) + ".manifest.json").unlink(missing_ok=True)
         manifest.update(path=str(destination), sha256=file_hash(destination), bytes=destination.stat().st_size, format="hftdata-v1")
         _atomic_json(Path(str(destination) + ".manifest.json"), manifest)
         return manifest
     if destination.suffix.lower() != ".csv":
         raise DatasetError("Generate to .csv or .hftdata; use import for Parquet")
     destination.parent.mkdir(parents=True, exist_ok=True)
-    temporary = destination.with_name(destination.name + ".tmp")
+    temporary = temporary_path(destination)
     rng = random.Random(seed)
     prices = [float(initial_price + i * 100) for i in range(instruments)]
     references = [deque(maxlen=32) for _ in range(instruments)]
@@ -267,7 +268,10 @@ def generate_dataset(path: str | Path, events: int = 10000, instruments: int = 4
                     common = rng.gauss(0.0, 1.0)
                 local_time = index / max(instruments, 1)
                 intraday = 0.65 + 0.7 * abs(math.cos(math.pi * index / max(events, 1)))
-                timestamp += max(1, int(rng.expovariate(intensity * intraday) * 1e9))
+                interval = rng.expovariate(intensity * intraday) * 1e9
+                if not math.isfinite(interval) or interval > MAX_INTEGER - timestamp:
+                    raise DatasetError("Generated timestamp exceeds the native integer range")
+                timestamp += max(1, int(interval))
                 innovation = math.sqrt(correlation) * common + math.sqrt(1 - correlation) * rng.gauss(0, 1)
                 regime = 1.8 if (index // max(128, instruments * 32)) % 3 == 1 else 0.8
                 movement = volatility * scale * regime * innovation
@@ -278,11 +282,11 @@ def generate_dataset(path: str | Path, events: int = 10000, instruments: int = 4
                 if scenario == "shock" and events // 2 <= index < events // 2 + instruments:
                     prices[instrument] *= 1 - shock_fraction
                 prices[instrument] = max(100.0, prices[instrument] + movement)
-                price = max(1, round(prices[instrument]))
+                price = min(MAX_PRICE, max(1, round(prices[instrument])))
                 side = "BUY" if rng.random() < buy_imbalance else "SELL"
                 if scenario == "predictable":
                     side = "BUY" if movement > 0 else "SELL"
-                quantity = max(1, int(rng.expovariate(1.0 / liquidity)))
+                quantity = min(MAX_QUANTITY, max(1, int(rng.expovariate(1.0 / liquidity))))
                 draw = rng.random()
                 reference = 0
                 event_order = 0
@@ -298,7 +302,7 @@ def generate_dataset(path: str | Path, events: int = 10000, instruments: int = 4
                     order_id += 1
                     event_order = order_id
                     # Far passive flow does not intentionally cross fresh marks.
-                    price = max(1, price + (20 if side == "SELL" else -20))
+                    price = min(MAX_PRICE, max(1, price + (20 if side == "SELL" else -20)))
                     if len(references[instrument]) == references[instrument].maxlen:
                         # Emit cancellation in place of another passive order so
                         # resting background orders remain bounded per instrument.
@@ -346,7 +350,7 @@ def import_dataset(source: str | Path, destination: str | Path) -> dict:
     else:
         if output_path.suffix.lower() != ".csv":
             raise DatasetError("Import destination must be .csv or .hftdata")
-        temporary = output_path.with_name(output_path.name + ".tmp")
+        temporary = temporary_path(output_path)
         try:
             with temporary.open("w", encoding="utf-8", newline="") as handle:
                 writer = csv.DictWriter(handle, fieldnames=EVENT_FIELDS, lineterminator="\n")
@@ -365,8 +369,10 @@ def import_dataset(source: str | Path, destination: str | Path) -> dict:
 def export_binary(source: str | Path, destination: str | Path) -> dict:
     """Export explicit HFTDATA v1: 56-byte header and 54-byte records."""
     output = Path(destination).resolve()
+    if Path(source).resolve() == output:
+        raise DatasetError("Binary output must differ from the source dataset")
     output.parent.mkdir(parents=True, exist_ok=True)
-    temporary = output.with_name(output.name + ".tmp")
+    temporary = temporary_path(output)
     digest = hashlib.sha256()
     count = 0
     try:

@@ -1,10 +1,10 @@
-# HFT-LAB user guide
+# Parallel and GPU-Accelerated High-Frequency Trading Simulation Engine user guide
 
-HFT-LAB runs offline research simulations. Market data, models, native engine
+Parallel and GPU-Accelerated High-Frequency Trading Simulation Engine runs offline research simulations. Market data, models, native engine
 results, logs and experiment manifests remain local. Start the terminal
 workspace from the project directory:
 
-![Authentic HFT-LAB terminal capture](../artifacts/tui.svg)
+![Authentic Parallel and GPU-Accelerated High-Frequency Trading Simulation Engine terminal capture](images/tui.svg)
 
 ```powershell
 .venv\Scripts\python.exe -m hftlab

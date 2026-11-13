@@ -128,7 +128,8 @@ int hft_book_cancel(HftBook *b, uint64_t id) {
     size_t n = map_lookup(b, id); if (!n) return 0;
     remove_node(b, n); return 1;
 }
-int hft_book_submit(HftBook *b, HftOrder o, int market, HftFillFn fill, void *context) {
+int hft_book_submit_checked(HftBook *b, HftOrder o, int market,
+                            HftFillCheckFn check, HftFillFn fill, void *context) {
     if (!o.id || o.id == TOMBSTONE || o.quantity <= 0 || o.quantity > 1000000000 ||
         o.price <= 0 || (o.side != 0 && o.side != 1) || map_lookup(b, o.id)) return 0;
     while (o.quantity > 0 && b->heap_counts[1 - o.side]) {
@@ -136,6 +137,11 @@ int hft_book_submit(HftBook *b, HftOrder o, int market, HftFillFn fill, void *co
         HftOrder maker = b->nodes[slot];
         if (!market && (o.side == 0 ? maker.price > o.price : maker.price < o.price)) break;
         int q = maker.quantity < o.quantity ? maker.quantity : o.quantity;
+        if (check) {
+            int decision = check(context, &maker, &o, maker.price, q);
+            if (decision < 0) { remove_node(b, slot); continue; }
+            if (!decision) return 0;
+        }
         if (fill) fill(context, &maker, &o, maker.price, q);
         o.quantity -= q; b->nodes[slot].quantity -= q;
         if (!b->nodes[slot].quantity) remove_node(b, slot);
@@ -148,6 +154,9 @@ int hft_book_submit(HftBook *b, HftOrder o, int market, HftFillFn fill, void *co
     o.sequence = ++b->sequence; o.live = 1; o.heap_index = b->heap_counts[o.side];
     b->nodes[slot] = o; b->heaps[o.side][b->heap_counts[o.side]++] = slot;
     heap_up(b, o.side, o.heap_index); return 1;
+}
+int hft_book_submit(HftBook *b, HftOrder o, int market, HftFillFn fill, void *context) {
+    return hft_book_submit_checked(b, o, market, NULL, fill, context);
 }
 int hft_book_validate(const HftBook *b) {
     for (int side = 0; side < 2; ++side) {

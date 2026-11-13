@@ -6,6 +6,11 @@
 #ifdef _WIN32
 extern int hft_atomic_replace(const char*,const char*);
 #endif
+static void optional_seconds(FILE *file, const char *name, double value, int measured) {
+    fprintf(file, "\"%s\":", name);
+    if (measured) fprintf(file, "%.17g,", value);
+    else fputs("null,", file);
+}
 void hft_capabilities(void){
     int openmp=0,mpi=0;
 #ifdef HFT_HAVE_OPENMP
@@ -41,7 +46,23 @@ int hft_result_write(const char *path,const HftConfig *config,const HftResult *r
     drawdown=r->portfolio_drawdown;
     fprintf(file,"\"wall_seconds\":%.17g,\"throughput\":%.17g,\"pnl\":%.17g,\"equity\":%.17g,\"fees\":%.17g,\"drawdown\":%.17g,\"realized_pnl\":%.17g,\"unrealized_pnl\":%.17g,\"gross_exposure\":%.17g,\"slippage\":%.17g,\"checksum\":\"%016" PRIx64 "\",\n",r->wall_seconds,r->wall_seconds>0?events/r->wall_seconds:0,pnl,equity,fees,drawdown,realized,unrealized,gross,slippage,checksum);
     fprintf(file,"\"latency_us\":{\"p50\":%.17g,\"p95\":%.17g,\"p99\":%.17g,\"sampled\":true,\"scope\":\"CPU event matching and decision; GPU preprocessing excluded\"},\n",r->latency_us[0],r->latency_us[1],r->latency_us[2]);
-    fprintf(file,"\"profiling\":{\"load_seconds\":%.17g,\"compute_seconds\":%.17g,\"feature_seconds\":%.17g,\"matching_seconds\":%.17g,\"mpi_communication_seconds\":%.17g,\"cuda_h2d_seconds\":%.17g,\"cuda_kernel_seconds\":%.17g,\"cuda_d2h_seconds\":%.17g,\"bytes_transferred\":%" PRIu64 ",\"peak_rss_bytes\":%zu,\"workers\":%d,\"ranks\":%d,\"affinity_applied_workers\":%d,",r->load_seconds,r->compute_seconds,r->feature_seconds,r->match_seconds,r->communication_seconds,r->h2d_seconds,r->kernel_seconds,r->d2h_seconds,r->bytes_transferred,r->peak_rss_bytes,r->workers,r->ranks,r->affinity_applied);
+    int hybrid = !strcmp(config->engine, "hybrid");
+    const char *components = config->components ? config->components : "";
+    int mpi = !strcmp(config->engine, "mpi") || (hybrid && strstr(components, "mpi"));
+    int cuda = !strcmp(config->engine, "cuda") || (hybrid && strstr(components, "cuda"));
+    fprintf(file, "\"profiling\":{\"load_seconds\":%.17g,\"compute_seconds\":%.17g,\"matching_seconds\":%.17g,",
+            r->load_seconds, r->compute_seconds, r->match_seconds);
+    optional_seconds(file, "feature_seconds", r->feature_seconds, hybrid || cuda);
+    optional_seconds(file, "mpi_communication_seconds", r->communication_seconds, mpi);
+    optional_seconds(file, "cuda_h2d_seconds", r->h2d_seconds, cuda);
+    optional_seconds(file, "cuda_kernel_seconds", r->kernel_seconds, cuda);
+    optional_seconds(file, "cuda_d2h_seconds", r->d2h_seconds, cuda);
+    if (mpi || cuda) fprintf(file, "\"bytes_transferred\":%" PRIu64 ",", r->bytes_transferred);
+    else fputs("\"bytes_transferred\":null,", file);
+    if (r->peak_rss_bytes) fprintf(file, "\"peak_rss_bytes\":%zu,", r->peak_rss_bytes);
+    else fputs("\"peak_rss_bytes\":null,", file);
+    fprintf(file, "\"workers\":%d,\"ranks\":%d,\"affinity_applied_workers\":%d,",
+            r->workers, r->ranks, r->affinity_applied);
 #ifdef _WIN32
     fprintf(file,"\"voluntary_context_switches\":null,\"involuntary_context_switches\":null},\n");
 #else

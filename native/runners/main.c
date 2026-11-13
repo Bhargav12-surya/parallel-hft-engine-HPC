@@ -9,17 +9,18 @@
 #ifdef HFT_HAVE_MPI
 #include <mpi.h>
 #endif
+#define HFT_APP_NAME "HFT"
 static void error_json(const char *message) {
-    fprintf(stderr,"HFT-LAB: %s\n",message);
+    fprintf(stderr,HFT_APP_NAME ": %s\n",message);
     fputs("{\"schema_version\":1,\"type\":\"error\",\"message\":\"",stdout);
     for(const unsigned char *p=(const unsigned char*)message;*p;++p){if(*p=='"'||*p=='\\')putchar('\\');if(*p>=32)putchar(*p);}
     fputs("\"}\n",stdout);
 }
 static int integer(const char *text,int minimum,int maximum,int *result){
-    char *end;errno=0;long n=strtol(text,&end,10);if(errno||*end||n<minimum||n>maximum)return 0;*result=(int)n;return 1;
+    char *end;errno=0;long n=strtol(text,&end,10);if(end==text||errno||*end||n<minimum||n>maximum)return 0;*result=(int)n;return 1;
 }
 static int real_number(const char *text,double minimum,double maximum,double *result){
-    char *end;errno=0;double n=strtod(text,&end);if(errno||*end||!isfinite(n)||n<minimum||n>maximum)return 0;*result=n;return 1;
+    char *end;errno=0;double n=strtod(text,&end);if(end==text||errno||*end||!isfinite(n)||n<minimum||n>maximum)return 0;*result=n;return 1;
 }
 static int one_of(const char *text,const char *const *options){for(int j=0;options[j];++j)if(!strcmp(text,options[j]))return 1;return 0;}
 static int infer(const char *model_path,const char *features_path){
@@ -52,7 +53,7 @@ int main(int argc,char **argv){
         if(!strcmp(arg,"--capabilities")){hft_capabilities();return 0;}
         if(!strcmp(arg,"--infer")){inference=1;continue;}
         if(!strcmp(arg,"--quiet")){config.quiet=1;continue;}
-        if(!strcmp(arg,"--help")){puts("HFT-LAB native runner v1\n--input canonical.csv --output result.json --engine sequential|threaded|openmp|mpi|cuda|hybrid\n--cpu-mode single-single|single-multi|multi-single|multi-multi --threads N\n--strategy hold|market-making|momentum|mean-reversion|stat-arb|ai --model model.hftmodel\n--capital N --fee-bps N --slippage-ticks N --latency-ns N --position-limit N --max-order N --max-loss N --tick-value N\n--components cpu,openmp,mpi,cuda --capabilities\n--infer --model model.hftmodel --features features.txt");return 0;}
+        if(!strcmp(arg,"--help")){puts(HFT_APP_NAME " native runner v1\n--input canonical.csv --output result.json --engine sequential|threaded|openmp|mpi|cuda|hybrid\n--cpu-mode single-single|single-multi|multi-single|multi-multi --threads N\n--strategy hold|market-making|momentum|mean-reversion|stat-arb|ai --model model.hftmodel\n--capital N --fee-bps N --slippage-ticks N --latency-ns N --position-limit N --max-order N --max-loss N --tick-value N\n--components cpu,openmp,mpi,cuda --capabilities\n--infer --model model.hftmodel --features features.txt");return 0;}
         if(i+1>=argc){error_json("Missing argument value");return 2;}const char *value=argv[++i];int valid=1;
         if(!strcmp(arg,"--input"))config.input=value;
         else if(!strcmp(arg,"--output"))config.output=value;
@@ -66,7 +67,7 @@ int main(int argc,char **argv){
         else if(!strcmp(arg,"--position-limit"))valid=integer(value,1,100000000,&config.position_limit);
         else if(!strcmp(arg,"--max-order"))valid=integer(value,1,100000000,&config.max_order);
         else if(!strcmp(arg,"--slippage-ticks"))valid=integer(value,0,1000000,&config.slippage_ticks);
-        else if(!strcmp(arg,"--latency-ns")){char *end;errno=0;unsigned long long n=strtoull(value,&end,10);valid=!errno&&!*end&&*value!='-'&&n<=UINT64_C(1000000000000);config.latency_ns=(uint64_t)n;}
+        else if(!strcmp(arg,"--latency-ns")){char *end;errno=0;unsigned long long n=strtoull(value,&end,10);valid=end!=value&&!errno&&!*end&&*value!='-'&&n<=UINT64_C(1000000000000);config.latency_ns=(uint64_t)n;}
         else if(!strcmp(arg,"--capital"))valid=real_number(value,.01,1e15,&config.capital);
         else if(!strcmp(arg,"--fee-bps"))valid=real_number(value,0,10000,&config.fee_bps);
         else if(!strcmp(arg,"--max-loss"))valid=real_number(value,0,1e15,&config.max_loss);
@@ -80,6 +81,7 @@ int main(int argc,char **argv){
     const char *strategies[]={"hold","market-making","momentum","mean-reversion","stat-arb","ai",NULL};
     if(!config.input||!config.output||!one_of(config.engine,engines)||!one_of(config.cpu_mode,modes)||!one_of(config.strategy,strategies)){
         error_json("Invalid engine/CPU mode/strategy or missing --input/--output");return 2;}
+    if(config.max_order>config.position_limit){error_json("max-order cannot exceed position-limit");return 2;}
     if(!strcmp(config.engine,"hybrid")){
         const char *valid_components[]={"cpu","openmp","mpi","cuda",NULL};char copy[128];
         if(strlen(config.components)>=sizeof(copy)){error_json("Hybrid component list is too long");return 2;}

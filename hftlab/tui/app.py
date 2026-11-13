@@ -39,6 +39,7 @@ from textual.widgets import (
     TabPane,
 )
 
+from hftlab import APP_NAME, __version__
 
 PAGES = (
     ("home", "⌂  Home"),
@@ -110,8 +111,8 @@ class ConfirmScreen(ModalScreen[bool]):
 class HFTLabApp(App[None]):
     """One terminal workspace for data, training, native execution and reports."""
 
-    TITLE = "HFT-LAB"
-    SUB_TITLE = "PARALLEL & GPU-ACCELERATED TRADING SIMULATION"
+    TITLE = APP_NAME
+    SUB_TITLE = ""
     CSS_PATH = "styles.tcss"
     ENABLE_COMMAND_PALETTE = True
     BINDINGS = [
@@ -139,7 +140,9 @@ class HFTLabApp(App[None]):
         self._prefs_path = Path(".hftlab-preferences.json")
         self._preferences: dict[str, Any] = {}
         try:
-            self._preferences = json.loads(self._prefs_path.read_text(encoding="utf-8"))
+            preferences = json.loads(self._prefs_path.read_text(encoding="utf-8"))
+            if isinstance(preferences, dict):
+                self._preferences = preferences
         except (OSError, ValueError):
             pass
 
@@ -147,12 +150,12 @@ class HFTLabApp(App[None]):
         yield Header(show_clock=True)
         with Horizontal(id="workspace"):
             with Vertical(id="sidebar"):
-                yield Static("[bold cyan]HFT-LAB[/]\n[dim]RESEARCH WORKSPACE[/]", id="brand")
+                
                 for key, label in PAGES:
                     yield Button(label, id=f"nav-{key}", classes="nav")
-                yield Static("OFFLINE SIMULATION\n[dim]No live exchange access[/]", id="offline")
+                
             with Vertical(id="main"):
-                yield Static("READY  •  Native computation · reproducible experiments", id="status-line")
+                
                 with ContentSwitcher(initial="home", id="pages"):
                     yield from self._compose_home()
                     yield from self._compose_data()
@@ -169,28 +172,15 @@ class HFTLabApp(App[None]):
 
     def _compose_home(self) -> Iterable[Any]:
         with VerticalScroll(id="home", classes="page"):
-            from hftlab import __version__
-
-            yield Static(f"HFT-LAB  [dim]v{__version__}[/]", classes="hero")
-            yield Static("PARALLEL & GPU-ACCELERATED TRADING SIMULATION", classes="subtitle")
-            yield Static(
-                "A local research laboratory for deterministic market simulation, native C engines, "
-                "machine learning and measured parallel performance.", classes="intro"
-            )
+            yield Static(APP_NAME, classes="hero")
+            yield Static(f"TEAM-15", classes="subtitle")
             yield Static("Detecting computing resources…", id="home-resources", classes="card")
             with Horizontal(classes="button-row"):
-                yield Button("New simulation →", variant="primary", id="quick-sim")
-                yield Button("Generate data", id="quick-data")
-                yield Button("Train model", id="quick-train")
-            with Horizontal(classes="button-row"):
-                yield Button("HPC benchmark", id="quick-benchmark")
-                yield Button("Compare engines", id="quick-compare")
-                yield Button("System diagnostics", id="quick-doctor")
+                yield Button("→ New simulation", variant="primary", id="quick-sim")
             yield Label("RECENT EXPERIMENTS", classes="section-label")
             yield DataTable(id="home-history", cursor_type="row", zebra_stripes=True)
             yield Label("RECENT MODELS", classes="section-label")
             yield Static("No trained models yet. Open AI Training to create a native inference artifact.", id="home-models")
-            yield Static("F2 Data  •  F5 Run  •  F6 Results  •  F1 Help  •  Ctrl+P Command palette", classes="muted")
 
     def _compose_data(self) -> Iterable[Any]:
         with VerticalScroll(id="data", classes="page"):
@@ -238,7 +228,6 @@ class HFTLabApp(App[None]):
             yield Label("AI native model path (required only for AI trading)")
             yield Input("models/reference.hftmodel", id="model-path")
             yield Static("Position, loss, size and execution-cost controls are configured on the Simulation page.", classes="muted")
-            yield Button("Choose computation engine →", variant="primary", id="strategy-next")
 
     def _compose_engine(self) -> Iterable[Any]:
         with VerticalScroll(id="engine", classes="page"):
@@ -259,7 +248,6 @@ class HFTLabApp(App[None]):
                 )
             yield Static("OpenMP and MPI configure workers automatically. CUDA requires a compatible native build and GPU.", id="engine-note", classes="card")
             yield Static("", id="engine-capabilities", classes="muted")
-            yield Button("Configure simulation →", variant="primary", id="engine-next")
 
     def _compose_config(self) -> Iterable[Any]:
         with VerticalScroll(id="config", classes="page"):
@@ -326,8 +314,7 @@ class HFTLabApp(App[None]):
 
     def _compose_training(self) -> Iterable[Any]:
         with VerticalScroll(id="training", classes="page"):
-            yield Static("AI Training Center", classes="page-title")
-            yield Static("Causal features · chronological purged splits · training-only preprocessing · native weights", classes="muted")
+            yield Static("AI Training", classes="page-title")
             yield Label("Training dataset")
             yield Input("data/generated/market.csv", id="train-dataset")
             yield Label("Model type")
@@ -362,7 +349,6 @@ class HFTLabApp(App[None]):
     def _compose_doctor(self) -> Iterable[Any]:
         with VerticalScroll(id="doctor", classes="page"):
             yield Static("System Diagnostics", classes="page-title")
-            yield Static("AVAILABLE / UNAVAILABLE / INCOMPATIBLE / NOT TESTED reflect actual discovery.", classes="muted")
             yield Button("Refresh diagnostics", variant="primary", id="refresh-doctor")
             yield RichLog(id="doctor-log", highlight=False, markup=False, wrap=True, min_width=20)
 
@@ -427,7 +413,7 @@ class HFTLabApp(App[None]):
         for command in super().get_system_commands(screen):
             if command.title != "Quit the application":
                 yield command
-        yield SystemCommand("Quit HFT-LAB", "Confirm before cancelling active work", self.action_request_quit)
+        yield SystemCommand(f"Quit {APP_NAME}", "Confirm before cancelling active work", self.action_request_quit)
         for page, label in PAGES:
             yield SystemCommand(f"Open {label.strip()}", f"Navigate to the {page} workspace", partial(self.show_page, page))
         yield SystemCommand("Run simulation", "Validate configuration and launch the native engine", self.action_start_simulation)
@@ -447,7 +433,7 @@ class HFTLabApp(App[None]):
 
     def action_request_quit(self) -> None:
         if self.busy:
-            self.push_screen(ConfirmScreen("Cancel the running job and quit HFT-LAB?"), self._quit_confirmed)
+            self.push_screen(ConfirmScreen(f"Cancel the running job and quit {APP_NAME}?"), self._quit_confirmed)
         else:
             self.exit()
 
@@ -728,7 +714,7 @@ class HFTLabApp(App[None]):
             self.query_one("#monitor-state", Static).update("CANCELLING  •  Waiting for benchmark process cleanup")
 
     def _render_results(self, result: dict[str, Any]) -> None:
-        r = result.get("result", result)
+        r = result.get("result") or result
         self.query_one("#benchmark-table", DataTable).display = False
         overview_keys = ("schema_version", "experiment_id", "engine", "strategy", "status", "events_processed", "wall_seconds", "throughput", "workers", "threads", "checksum")
         self._result_update("overview", {k: r[k] for k in overview_keys if k in r})
@@ -739,7 +725,7 @@ class HFTLabApp(App[None]):
         for name in ("openmp", "mpi", "cuda", "hybrid"):
             value = r.get(name, profiling.get(name) if isinstance(profiling, dict) else None)
             if value is None:
-                matching = {k: v for k, v in profiling.items() if name in k} if isinstance(profiling, dict) else {}
+                matching = {k: v for k, v in profiling.items() if name in k and v is not None} if isinstance(profiling, dict) else {}
                 value = matching or f"No {name.upper()} measurements in this experiment. Select the corresponding available engine to collect them."
             self._result_update(name, value)
         self._result_update("trading", {k: r[k] for k in ("pnl", "equity", "cash", "fees", "trades", "orders", "rejected_orders", "drawdown", "positions", "instruments", "slippage", "equity_curve") if k in r})
@@ -808,7 +794,7 @@ class HFTLabApp(App[None]):
         table = self.query_one("#datasets-table", DataTable)
         table.clear()
         roots = [Path("data/generated"), Path("data/samples"), Path("data/processed")]
-        paths = {p.resolve() for root in roots if root.exists() for p in root.iterdir() if p.is_file() and p.suffix in (".csv", ".bin", ".parquet")}
+        paths = {p.resolve() for root in roots if root.exists() for p in root.iterdir() if p.is_file() and p.suffix.lower() in (".csv", ".bin", ".hft", ".hftdata", ".parquet")}
         selected = Path(self._input("dataset-path"))
         if selected.is_file():
             paths.add(selected.resolve())
@@ -876,7 +862,8 @@ class HFTLabApp(App[None]):
     def _training_finished(self, output: Path, value: dict[str, Any]) -> None:
         self._set_busy(False, "COMPLETED  •  Model trained and exported")
         self.query_one("#training-log", RichLog).write(render_json(value))
-        self.query_one("#model-path", Input).value = str(output)
+        self.query_one("#model-path", Input).value = str(value.get("native_model", output))
+        self.query_one("#train-output", Input).value = str(value.get("native_model", output))
         self._browse_models()
         self.notify("Model training completed. Validation and test metrics are in the training log.")
 
@@ -890,6 +877,8 @@ class HFTLabApp(App[None]):
 
     def use_trained_model(self) -> None:
         output = Path(self._input("train-output"))
+        if output.is_dir():
+            output = output / "model.hftmodel"
         if not output.is_file():
             raise ValueError(f"Model artifact does not exist: {output}")
         self.query_one("#model-path", Input).value = str(output)
@@ -922,8 +911,9 @@ class HFTLabApp(App[None]):
 
     def _benchmark_finished(self, value: dict[str, Any]) -> None:
         self.result = value
-        self._set_busy(False, "COMPLETED  •  Benchmark report saved")
-        self.query_one("#monitor-state", Static).update("COMPLETED  •  Benchmark measurements available in Results")
+        status = value.get("status", "FAILED" if any(row.get("status") in ("FAILED", "INCORRECT") for row in value.get("engines", [])) else "COMPLETED")
+        self._set_busy(False, f"{status}  •  Benchmark report saved")
+        self.query_one("#monitor-state", Static).update(f"{status}  •  Benchmark measurements available in Results")
         self.query_one("#monitor-log", RichLog).write(render_json(value))
         self._result_update("overview", value)
         self._result_update("scaling", value)
@@ -996,7 +986,7 @@ class HFTLabApp(App[None]):
             from hftlab.experiments import ExperimentRegistry
 
             experiment = ExperimentRegistry().get(experiment_id)
-            result = experiment.get("result", experiment)
+            result = experiment.get("result") or experiment
             if isinstance(result, str):
                 result = json.loads(result)
             self.result = result
@@ -1049,9 +1039,8 @@ class HFTLabApp(App[None]):
             "cpu_mode": self._selected("cpu-mode"),
             "output_directory": self._input("output-directory"),
         }
-        temporary = self._prefs_path.with_suffix(".tmp")
-        temporary.write_text(render_json(preferences) + "\n", encoding="utf-8")
-        temporary.replace(self._prefs_path)
+        from hftlab.utilities import atomic_json
+        atomic_json(self._prefs_path, preferences)
         self.notify("Preferences saved.")
 
     def _restore_preferences(self) -> None:
@@ -1065,6 +1054,8 @@ class HFTLabApp(App[None]):
             ("cpu_mode", "cpu-mode", {v for _, v in CPU_MODES}),
         ):
             value = self._preferences.get(key)
-            if value in allowed:
+            if isinstance(value, str) and value in allowed:
                 self.query_one(f"#{widget}", Select).value = value
-        self.set_class(bool(self._preferences.get("compact", False)), "compact")
+        compact = self._preferences.get("compact") is True
+        self.query_one("#compact-mode", Checkbox).value = compact
+        self.set_class(compact, "compact")

@@ -5,11 +5,11 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "hftlab"
 version = "0.1.0"
-description = "Offline C-based trading simulation and reproducible heterogeneous HPC experiments"
+description = "Parallel and GPU-Accelerated High-Frequency Trading Simulation Engine"
 readme = "README.md"
 requires-python = ">=3.11"
 license = {text = "MIT"}
-authors = [{name = "HFT-LAB contributors"}]
+authors = [{name = "Parallel and GPU-Accelerated High-Frequency Trading Simulation Engine contributors"}]
 dependencies = ["textual==0.89.1", "rich==13.9.4", "psutil==6.1.1", "PyYAML==6.0.2"]
 
 [project.optional-dependencies]

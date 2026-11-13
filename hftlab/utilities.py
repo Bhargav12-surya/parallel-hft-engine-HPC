@@ -23,6 +23,15 @@ def file_hash(path: str | Path) -> str:
     return digest.hexdigest()
 
 
+def temporary_path(path: str | Path, suffix: str = ".tmp") -> Path:
+    """Reserve a unique sibling file for a caller to replace or remove."""
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    handle, temporary = tempfile.mkstemp(prefix=f".{path.name}.", suffix=suffix, dir=path.parent)
+    os.close(handle)
+    return Path(temporary)
+
+
 def atomic_json(path: str | Path, value: Any) -> Path:
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -49,7 +58,12 @@ def read_json(path: str | Path) -> dict:
 
 
 def finite_number(value: Any, name: str, *, minimum: float = 0, maximum: float = 1e15) -> float:
-    number = float(value)
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise ValueError(f"{name} must be a number")
+    try:
+        number = float(value)
+    except OverflowError as error:
+        raise ValueError(f"{name} is outside the supported numeric range") from error
     if not math.isfinite(number) or not minimum <= number <= maximum:
         raise ValueError(f"{name} must be finite and between {minimum:g} and {maximum:g}")
     return number

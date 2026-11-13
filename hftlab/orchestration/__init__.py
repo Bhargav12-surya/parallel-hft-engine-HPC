@@ -86,6 +86,7 @@ class JobManager:
         started = time.perf_counter()
         self._cancel.clear()
         self._process = None
+        self.last_experiment_id = None
         callback_error = None
 
         def emit(event: dict) -> None:
@@ -130,12 +131,13 @@ class JobManager:
             transition("QUEUED")
             if self._cancel.is_set() or (cancel_event is not None and cancel_event.is_set()):
                 raise JobCancelled("Job cancelled before launch")
-            if config.dataset.suffix.lower() != ".csv":
-                from dataclasses import replace
-                from hftlab.datasets import import_dataset
-                imported = run_dir / "input.csv"
-                import_dataset(config.dataset, imported)
-                config = replace(config, dataset=imported)
+            # Snapshot validated inputs into canonical native CSV, including CSV
+            # files with BOMs, quoted fields or normalized event names.
+            from dataclasses import replace
+            from hftlab.datasets import import_dataset
+            imported = run_dir / "input.csv"
+            import_dataset(config.dataset, imported)
+            config = replace(config, dataset=imported)
             arguments = command(config, run_dir / "result.json")
             if quiet:
                 arguments.append("--quiet")
@@ -244,7 +246,7 @@ class JobManager:
 
 
 def _validate_result(result: dict, config: SimulationConfig | None = None, expected_events: int | None = None) -> None:
-    if result.get("schema_version") != 1:
+    if not isinstance(result, dict) or type(result.get("schema_version")) is not int or result["schema_version"] != 1:
         raise ValueError("Unsupported native result schema")
     for key in ("wall_seconds", "throughput", "pnl", "equity", "fees", "drawdown"):
         value = result.get(key)

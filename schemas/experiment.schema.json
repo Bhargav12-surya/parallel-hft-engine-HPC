@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Persisted HFT-LAB experiment manifest v1",
+  "title": "Persisted Parallel and GPU-Accelerated High-Frequency Trading Simulation Engine experiment manifest v1",
   "type": "object", "required": ["schema_version", "id", "timestamp", "config", "status", "dataset_sha256", "runner_sha256", "output_dir"],
   "properties": {
     "schema_version": {"const": 1}, "id": {"type": "string", "pattern": "^[a-zA-Z0-9_-]{1,100}$"},

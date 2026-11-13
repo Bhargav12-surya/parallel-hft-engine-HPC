@@ -1,6 +1,6 @@
 # Where the generated files are saved
 
-Everything created for HFT-LAB is inside **`D:\HPC`**.
+Everything created for Parallel and GPU-Accelerated High-Frequency Trading Simulation Engine is inside **`D:\HPC`**.
 
 | Location | Contents |
 |---|---|

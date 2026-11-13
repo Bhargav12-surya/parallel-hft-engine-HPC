@@ -68,13 +68,28 @@ static uint64_t hash_step(uint64_t hash, uint64_t value) {
     for (int j = 0; j < 8; ++j) { hash ^= value & 255; hash *= UINT64_C(1099511628211); value >>= 8; }
     return hash;
 }
+static int risk_check(Instrument *s, int side, int quantity, int64_t price);
+static int64_t execution_price(const Instrument *s, int side, int64_t price) {
+    int64_t adjusted = price + (side ? -1 : 1) * s->config->slippage_ticks;
+    return adjusted < 1 ? 1 : adjusted;
+}
+static int check_fill(void *context, const HftOrder *maker, const HftOrder *taker,
+                      int64_t price, int quantity) {
+    Instrument *s = context;
+    if (maker->agent && !risk_check(s, maker->side, quantity, execution_price(s, maker->side, price))) {
+        ++s->result.rejected;
+        ++s->result.cancels;
+        return -1;
+    }
+    if (taker->agent && !risk_check(s, taker->side, quantity, execution_price(s, taker->side, price))) return 0;
+    return 1;
+}
 static void on_fill(void *context, const HftOrder *maker, const HftOrder *taker, int64_t price, int quantity) {
     Instrument *s = context;
     const HftOrder *orders[2] = { maker, taker };
     for (int j = 0; j < 2; ++j) if (orders[j]->agent) {
         int side = orders[j]->side;
-        int64_t adjusted = price + (side ? -1 : 1) * s->config->slippage_ticks;
-        if (adjusted < 1) adjusted = 1;
+        int64_t adjusted = execution_price(s, side, price);
         hft_portfolio_fill(&s->portfolio,side,adjusted,quantity,s->config->fee_bps,s->config->tick_value);
         s->portfolio.slippage += fabs((double)adjusted - price) * quantity * s->config->tick_value;
         s->result.checksum = hash_step(s->result.checksum,orders[j]->id);
@@ -83,7 +98,7 @@ static void on_fill(void *context, const HftOrder *maker, const HftOrder *taker,
     }
 }
 static void submit(Instrument *s, HftOrder order, int market) {
-    int result = hft_book_submit(&s->book,order,market,on_fill,s);
+    int result = hft_book_submit_checked(&s->book,order,market,check_fill,on_fill,s);
     if (result < 0) s->failure = 1;
     if (result <= 0) ++s->result.rejected;
 }
@@ -114,15 +129,16 @@ static void mark_to_market(Instrument *s) {
 static int risk_check(Instrument *s, int side, int quantity, int64_t price) {
     int64_t next = s->portfolio.position + (side ? -quantity : quantity);
     double gross = fabs((double)next) * price * s->config->tick_value;
-    if (s->halted || quantity <= 0 || quantity > s->config->max_order ||
+    double pnl = s->portfolio.cash + s->portfolio.position * s->mark * s->config->tick_value - s->capital;
+    if (s->halted || pnl < -s->config->max_loss || quantity <= 0 || quantity > s->config->max_order ||
         llabs(next) > s->config->position_limit || gross > s->capital * 2 ||
         (!side && quantity * (double)price * s->config->tick_value * (1 + s->config->fee_bps * .0001) > s->portfolio.cash)) {
-        ++s->result.rejected; return 0;
+        return 0;
     }
     return 1;
 }
 static void send_strategy(Instrument *s, HftOrder order, int market, uint64_t now) {
-    if (!risk_check(s,order.side,order.quantity,order.price)) return;
+    if (!risk_check(s,order.side,order.quantity,order.price)) { ++s->result.rejected; return; }
     ++s->result.orders;
     if (s->config->latency_ns) {
         if (s->pending_count == 32 || UINT64_MAX - now < s->config->latency_ns) { ++s->result.rejected; return; }
@@ -138,7 +154,7 @@ static void deliver_pending(Instrument *s, uint64_t now) {
         if (risk_check(s,order.side,order.quantity,order.price)) {
             if (!s->pending_market[j]) hft_book_cancel(&s->book,order.id);
             submit(s,order,s->pending_market[j]);
-        }
+        } else ++s->result.rejected;
         --s->pending_count;
         memmove(&s->pending[j],&s->pending[j+1],(size_t)(s->pending_count-j)*sizeof(*s->pending));
         memmove(&s->due[j],&s->due[j+1],(size_t)(s->pending_count-j)*sizeof(*s->due));

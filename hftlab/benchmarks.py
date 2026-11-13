@@ -41,13 +41,17 @@ def summarize(samples: list[float]) -> dict:
 def benchmark(config: SimulationConfig, repeats: int = 3, engines: list[str] | None = None,
               output: Path = Path("reports/benchmark.json"), warmups: int = 1,
               cancel_event: threading.Event | None = None) -> dict:
-    if not 1 <= repeats <= 100 or not 0 <= warmups <= 10:
+    if type(repeats) is not int or type(warmups) is not int or not 1 <= repeats <= 100 or not 0 <= warmups <= 10:
         raise ValueError("repeats must be 1..100 and warmups 0..10")
     config.validate()
     requested = list(dict.fromkeys(["sequential"] + (engines or ["sequential", "threaded", "openmp"])))
     if any(engine not in ENGINES for engine in requested):
         raise ValueError("Unknown engine in benchmark request")
     capability = capabilities()
+    if capability.get("error"):
+        raise RuntimeError(f"Native capability probe failed: {capability['error']}")
+    if not engine_available(capability, "sequential"):
+        raise RuntimeError("Sequential oracle is unavailable")
     report = {"schema_version": 1, "timestamp": utc_now(), "config": config.to_dict(),
               "methodology": {"scope": "native wall_seconds: feature/inference and matching execution, excludes CSV parsing and partition allocation; load_seconds and full process/orchestration durations are recorded separately",
                               "warmups": warmups, "repeats": repeats, "live_visualization": False, "native_progress": False,
@@ -71,6 +75,8 @@ def benchmark(config: SimulationConfig, repeats: int = 3, engines: list[str] | N
             checks = [compare_results(reference, run) for run in runs]
             if not all(check["passed"] for check in checks):
                 report["engines"].append({"engine": engine, "status": "INCORRECT", "checks": checks, "runs": runs})
+                if engine == "sequential":
+                    break
                 continue
             timings = summarize([run["wall_seconds"] for run in runs])
             if engine == "sequential":
@@ -95,6 +101,7 @@ def benchmark(config: SimulationConfig, repeats: int = 3, engines: list[str] | N
             report["engines"].append({"engine": engine, "status": "FAILED", "error": str(error)})
             if engine == "sequential":
                 break
+    report["status"] = "FAILED" if any(row["status"] in ("FAILED", "INCORRECT") for row in report["engines"]) else "COMPLETED"
     atomic_json(output, report)
     report["report_path"] = str(Path(output).resolve())
     return report
@@ -102,7 +109,7 @@ def benchmark(config: SimulationConfig, repeats: int = 3, engines: list[str] | N
 
 def scaling(config: SimulationConfig, workers: list[int], *, weak: bool = False, repeats: int = 3,
             events_per_worker: int = 10000, output: Path = Path("reports/scaling.json")) -> dict:
-    if not workers or any(not 1 <= count <= 1024 for count in workers):
+    if not workers or any(type(count) is not int or not 1 <= count <= 1024 for count in workers):
         raise ValueError("Scaling worker counts must be between 1 and 1024")
     from hftlab.datasets import generate_dataset
     rows = []
@@ -131,7 +138,11 @@ def scaling(config: SimulationConfig, workers: list[int], *, weak: bool = False,
                 row.update(reference_workers=reference_workers,
                            scaling_speedup=reference_time / elapsed,
                            scaling_efficiency=(reference_time / elapsed) if weak else (reference_time / elapsed / ratio))
-    value = {"schema_version": 1, "kind": "weak" if weak else "strong", "rows": rows,
+    completed = all(row["benchmark"].get("status") == "COMPLETED" and any(
+        item["engine"] == config.engine and item["status"] == "COMPLETED"
+        for item in row["benchmark"]["engines"]) for row in rows)
+    value = {"schema_version": 1, "status": "COMPLETED" if completed else "FAILED",
+             "kind": "weak" if weak else "strong", "rows": rows,
              "definition": "weak grows events and independent instruments with workers; strong holds input fixed",
              "efficiency_definition": "T(reference)/T(p)" if weak else "T(reference)/T(p)/(p/reference_workers)",
              "engine": config.engine}
