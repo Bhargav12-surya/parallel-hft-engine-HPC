@@ -39,7 +39,7 @@ from textual.widgets import (
     TabPane,
 )
 
-from hftlab import APP_NAME, __version__
+from hftlab import APP_NAME
 
 PAGES = (
     ("home", "⌂  Home"),
@@ -173,7 +173,7 @@ class HFTLabApp(App[None]):
     def _compose_home(self) -> Iterable[Any]:
         with VerticalScroll(id="home", classes="page"):
             yield Static(APP_NAME, classes="hero")
-            yield Static(f"TEAM-15", classes="subtitle")
+            yield Static("TEAM-15", classes="subtitle")
             yield Static("Detecting computing resources…", id="home-resources", classes="card")
             with Horizontal(classes="button-row"):
                 yield Button("→ New simulation", variant="primary", id="quick-sim")
