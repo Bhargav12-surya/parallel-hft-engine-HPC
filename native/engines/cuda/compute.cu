@@ -1,5 +1,3 @@
-/* Independent event features use a predecessor index: no event reordering or
- * dependent exchange matching occurs on the GPU. One CUDA thread per event. */
 #include "hft_engine.h"
 #include <cuda_runtime.h>
 #include <cstdio>

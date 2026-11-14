@@ -29,6 +29,30 @@ def test_registry_id_cannot_traverse(tmp_path):
         registry.save({"id": "../escape"})
 
 
+def test_registry_search_and_index_follow_updated_configuration(tmp_path):
+    registry = ExperimentRegistry(tmp_path)
+    value = {"id": "updated", "timestamp": "2026-11-14", "config": {
+        "engine": "sequential", "strategy": "momentum", "dataset": "market-a.csv"}, "status": "RUNNING"}
+    registry.save(value)
+    assert len(registry.list(search="market-a.csv")) == 1
+    value["config"].update(engine="cuda", strategy="ai", dataset="market-b.csv")
+    registry.save(value)
+    assert len(registry.list(search="cuda")) == 1
+    assert len(registry.list(search="market-b.csv")) == 1
+    assert registry.list(search="sequential") == []
+    assert registry.list(search="market-a.csv") == []
+
+
+def test_registry_connection_is_closed_after_use(tmp_path):
+    import sqlite3
+
+    registry = ExperimentRegistry(tmp_path)
+    with registry._connect() as connection:
+        assert connection.execute("SELECT 1").fetchone()[0] == 1
+    with pytest.raises(sqlite3.ProgrammingError, match="closed"):
+        connection.execute("SELECT 1")
+
+
 def test_reports_escape_and_roundtrip(tmp_path):
     value = {"engine": "<script>alert(1)</script>", "pnl": -3.5, "source": "=HYPERLINK(\"bad\")"}
     html = export_report(value, tmp_path / "report.html").read_text(encoding="utf-8")
@@ -46,6 +70,17 @@ def test_atomic_json_rejects_nonfinite(tmp_path):
     with pytest.raises(ValueError):
         atomic_json(path, {"nan": float("nan")})
     assert read_json(path) == {"ok": 1}
+
+
+def test_csv_and_markdown_escape_user_controlled_keys_and_values(tmp_path):
+    value = {"  =formula": "\t@formula", "<img>|key\n": "<script>|text\n"}
+    with export_report(value, tmp_path / "report.csv").open(newline="", encoding="utf-8") as stream:
+        rows = list(csv.reader(stream))
+    assert rows[1] == ["'  =formula", "'\t@formula"]
+    markdown = export_report(value, tmp_path / "report.md").read_text(encoding="utf-8")
+    assert "<img>" not in markdown and "<script>" not in markdown
+    assert "&lt;img&gt;\\|key " in markdown
+    assert "&lt;script&gt;\\|text " in markdown
 
 
 def test_correctness_gate():

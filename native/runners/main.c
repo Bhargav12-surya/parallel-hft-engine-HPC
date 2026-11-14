@@ -15,6 +15,7 @@ static void error_json(const char *message) {
     fputs("{\"schema_version\":1,\"type\":\"error\",\"message\":\"",stdout);
     for(const unsigned char *p=(const unsigned char*)message;*p;++p){if(*p=='"'||*p=='\\')putchar('\\');if(*p>=32)putchar(*p);}
     fputs("\"}\n",stdout);
+    fflush(stdout);
 }
 static int integer(const char *text,int minimum,int maximum,int *result){
     char *end;errno=0;long n=strtol(text,&end,10);if(end==text||errno||*end||n<minimum||n>maximum)return 0;*result=(int)n;return 1;
@@ -42,7 +43,7 @@ static int infer(const char *model_path,const char *features_path){
     if(status){free(probabilities);error_json("Malformed features or inference memory/I/O error");return status;}
     printf("{\"schema_version\":1,\"probabilities\":[");
     for(size_t i=0;i<count;++i)printf("%s[%.17g,%.17g,%.17g]",i?",":"",probabilities[3*i],probabilities[3*i+1],probabilities[3*i+2]);
-    printf("]}\n");free(probabilities);return 0;
+    printf("]}\n");fflush(stdout);free(probabilities);return 0;
 }
 int main(int argc,char **argv){
     HftConfig config;memset(&config,0,sizeof(config));
@@ -122,7 +123,7 @@ int main(int argc,char **argv){
     if(ok)ok=hft_run(&config,&data,model_pointer,&result);
     if(ok&&rank==0)ok=hft_result_write(config.output,&config,&result);
     if(rank==0){
-        if(ok)puts("{\"schema_version\":1,\"type\":\"result\",\"status\":\"COMPLETED\"}");
+        if(ok){puts("{\"schema_version\":1,\"type\":\"result\",\"status\":\"COMPLETED\"}");fflush(stdout);}
         else error_json(*result.error?result.error:"Native execution or output write failed");
     }
     hft_dataset_free(&data);free(result.instruments);

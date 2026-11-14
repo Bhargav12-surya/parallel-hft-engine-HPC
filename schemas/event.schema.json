@@ -8,8 +8,8 @@
     "timestamp_ns": {"type": "integer", "minimum": 0, "maximum": 9223372036854775807},
     "instrument_id": {"type": "integer", "minimum": 0, "maximum": 65535},
     "event_type": {"enum": ["QUOTE", "LIMIT", "MARKET", "CANCEL", "MODIFY"]},
-    "side": {"enum": ["BUY", "SELL"]}, "price_ticks": {"type": "integer", "minimum": 0},
-    "quantity": {"type": "integer", "minimum": 0}, "order_id": {"type": "integer", "minimum": 0},
-    "reference_order_id": {"type": "integer", "minimum": 0}
+    "side": {"enum": ["BUY", "SELL"]}, "price_ticks": {"type": "integer", "minimum": 0, "maximum": 1000000000000},
+    "quantity": {"type": "integer", "minimum": 0, "maximum": 1000000000}, "order_id": {"type": "integer", "minimum": 0, "maximum": 9223372036854775807},
+    "reference_order_id": {"type": "integer", "minimum": 0, "maximum": 9223372036854775807}
   }
 }

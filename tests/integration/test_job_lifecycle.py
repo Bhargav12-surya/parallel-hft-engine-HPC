@@ -1,5 +1,6 @@
 import sys
 import threading
+from dataclasses import replace
 
 import pytest
 
@@ -68,3 +69,19 @@ def test_external_cancellation_interrupts_quiet_supervised_job(monkeypatch, tmp_
         manager.run(config, on_event=on_event, quiet=True, cancel_event=cancelled)
     assert manager.state == "CANCELLED"
     assert manager._process.poll() is not None
+
+
+def test_timeout_reaps_reader_when_output_queue_is_full(monkeypatch, tmp_path):
+    import time
+
+    config = setup_process(monkeypatch, tmp_path)
+    (tmp_path / "deliberately_slow_backend.py").write_text(
+        "import time\nfor _ in range(10000): print('{\"schema_version\":1,\"type\":\"progress\"}',flush=True)\ntime.sleep(30)\n")
+    readers_before = {thread.ident for thread in threading.enumerate() if thread.name == "hftlab-jsonl"}
+    manager = JobManager(ExperimentRegistry(tmp_path / "registry"))
+    with pytest.raises(TimeoutError):
+        manager.run(replace(config, timeout=.5), on_event=lambda event: time.sleep(.05)
+                    if event.get("type") == "progress" else None)
+    assert manager._process.poll() is not None
+    readers_after = {thread.ident for thread in threading.enumerate() if thread.name == "hftlab-jsonl"}
+    assert readers_after == readers_before

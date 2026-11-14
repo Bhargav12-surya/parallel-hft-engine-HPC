@@ -6,6 +6,7 @@ import json
 import math
 import os
 import tempfile
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -32,6 +33,18 @@ def temporary_path(path: str | Path, suffix: str = ".tmp") -> Path:
     return Path(temporary)
 
 
+def replace_file(source: str | Path, destination: str | Path) -> None:
+    """Replace atomically, allowing short Windows sharing-lock contention."""
+    for attempt in range(5):
+        try:
+            os.replace(source, destination)
+            return
+        except PermissionError as error:
+            if os.name != "nt" or error.winerror not in (5, 32) or attempt == 4:
+                raise
+            time.sleep(.01 * 2**attempt)
+
+
 def atomic_json(path: str | Path, value: Any) -> Path:
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -42,7 +55,7 @@ def atomic_json(path: str | Path, value: Any) -> Path:
             stream.write("\n")
             stream.flush()
             os.fsync(stream.fileno())
-        os.replace(temporary, path)
+        replace_file(temporary, path)
     finally:
         if os.path.exists(temporary):
             os.unlink(temporary)

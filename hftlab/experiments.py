@@ -4,7 +4,9 @@ from __future__ import annotations
 import json
 import re
 import sqlite3
+from contextlib import contextmanager
 from pathlib import Path
+from typing import Iterator
 
 
 class ExperimentRegistry:
@@ -18,11 +20,16 @@ class ExperimentRegistry:
                 strategy TEXT NOT NULL, status TEXT NOT NULL, runtime REAL, pnl REAL,
                 manifest TEXT NOT NULL)""")
 
-    def _connect(self) -> sqlite3.Connection:
+    @contextmanager
+    def _connect(self) -> Iterator[sqlite3.Connection]:
         connection = sqlite3.connect(self.database, timeout=15)
-        connection.execute("PRAGMA journal_mode=WAL")
-        connection.row_factory = sqlite3.Row
-        return connection
+        try:
+            connection.execute("PRAGMA journal_mode=WAL")
+            connection.row_factory = sqlite3.Row
+            with connection:
+                yield connection
+        finally:
+            connection.close()
 
     def save(self, manifest: dict) -> None:
         identifier = str(manifest["id"])
@@ -31,7 +38,8 @@ class ExperimentRegistry:
         result = manifest.get("result") or {}
         with self._connect() as connection:
             connection.execute("""INSERT INTO experiments VALUES (?,?,?,?,?,?,?,?)
-                ON CONFLICT(id) DO UPDATE SET status=excluded.status,
+                ON CONFLICT(id) DO UPDATE SET timestamp=excluded.timestamp,
+                engine=excluded.engine,strategy=excluded.strategy,status=excluded.status,
                 runtime=excluded.runtime,pnl=excluded.pnl,manifest=excluded.manifest""",
                 (identifier, manifest["timestamp"], manifest["config"]["engine"],
                  manifest["config"]["strategy"], manifest["status"], result.get("wall_seconds"),
@@ -44,7 +52,8 @@ class ExperimentRegistry:
         with self._connect() as connection:
             rows = connection.execute(
                 "SELECT manifest FROM experiments WHERE id LIKE ? OR engine LIKE ? OR strategy LIKE ? "
-                f"ORDER BY {columns[sort]} LIMIT ?", (f"%{search}%",)*3 + (max(1, min(10000, limit)),))
+                "OR json_extract(manifest, '$.config.dataset') LIKE ? "
+                f"ORDER BY {columns[sort]} LIMIT ?", (f"%{search}%",)*4 + (max(1, min(10000, limit)),))
             return [json.loads(row["manifest"]) for row in rows]
 
     def get(self, identifier: str) -> dict:

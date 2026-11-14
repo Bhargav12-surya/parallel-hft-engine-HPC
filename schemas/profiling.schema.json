@@ -4,9 +4,10 @@
   "type": "object",
   "properties": {
     "load_seconds": {"type": "number", "minimum": 0}, "compute_seconds": {"type": "number", "minimum": 0},
-    "feature_seconds": {"type": "number", "minimum": 0}, "matching_seconds": {"type": "number", "minimum": 0},
-    "mpi_communication_seconds": {"type": "number", "minimum": 0}, "cuda_h2d_seconds": {"type": "number", "minimum": 0},
-    "cuda_kernel_seconds": {"type": "number", "minimum": 0}, "cuda_d2h_seconds": {"type": "number", "minimum": 0},
+    "feature_seconds": {"type": ["number", "null"], "minimum": 0}, "matching_seconds": {"type": "number", "minimum": 0},
+    "mpi_communication_seconds": {"type": ["number", "null"], "minimum": 0}, "cuda_h2d_seconds": {"type": ["number", "null"], "minimum": 0},
+    "cuda_kernel_seconds": {"type": ["number", "null"], "minimum": 0}, "cuda_d2h_seconds": {"type": ["number", "null"], "minimum": 0},
+    "bytes_transferred": {"type": ["integer", "null"], "minimum": 0},
     "workers": {"type": "integer", "minimum": 1}, "ranks": {"type": "integer", "minimum": 1},
     "peak_rss_bytes": {"type": ["integer", "null"], "minimum": 0},
     "voluntary_context_switches": {"type": ["integer", "null"], "minimum": 0},

@@ -19,7 +19,7 @@ import sys
 from typing import Callable, Iterable
 
 from hftlab.datasets.market import EVENT_FIELDS, file_hash, iter_events, validate_dataset
-from hftlab.utilities import atomic_json as _atomic_json, temporary_path
+from hftlab.utilities import atomic_json as _atomic_json, replace_file, temporary_path
 
 FEATURE_NAMES = ("return1", "momentum4", "momentum16", "volatility16", "imbalance", "spread")
 LABELS = ("SELL", "HOLD", "BUY")
@@ -526,7 +526,7 @@ def export_holdout(dataset: str | Path, model_path: str | Path, output: str | Pa
         # Validate before replacing an existing export; an invalid managed file
         # never becomes the visible final output.
         validate_dataset(temporary)
-        os.replace(temporary, destination)
+        replace_file(temporary, destination)
     except BaseException:
         temporary.unlink(missing_ok=True)
         raise
@@ -556,7 +556,7 @@ def _export_model(model: dict, destination: Path) -> None:
     temporary = temporary_path(destination)
     try:
         temporary.write_text("\n".join(values) + "\n", encoding="ascii")
-        os.replace(temporary, destination)
+        replace_file(temporary, destination)
     finally:
         temporary.unlink(missing_ok=True)
 
@@ -570,7 +570,7 @@ def load_model(path: str | Path, verify_checksum: bool = True) -> dict:
     if source.stat().st_size > 2 * 1024 * 1024:
         raise ModelError("Model file exceeds the 2 MiB safety limit")
     metadata_paths = [source.with_suffix(source.suffix + ".json")]
-    if source.name == "model.hftmodel":
+    if source.name.lower() == "model.hftmodel":
         metadata_paths.append(source.parent / "metadata.json")
     metadata = None
     for candidate in metadata_paths:
@@ -583,6 +583,8 @@ def load_model(path: str | Path, verify_checksum: bool = True) -> dict:
                 raise ModelError("Invalid model metadata schema")
             if metadata.get("feature_names") != list(FEATURE_NAMES) or metadata.get("labels") != list(LABELS):
                 raise ModelError("Model metadata features/classes are incompatible")
+            if metadata.get("export_format", "HFTMODEL1") != "HFTMODEL1":
+                raise ModelError("Unsupported model metadata export format")
             break
     if verify_checksum and metadata is not None and file_hash(source) != metadata.get("sha256"):
         raise ModelError("Model checksum does not match metadata")
@@ -593,6 +595,9 @@ def load_model(path: str | Path, verify_checksum: bool = True) -> dict:
         inputs, hidden, outputs = map(int, tokens[2:5])
         if inputs != 6 or outputs != 3 or not 0 <= hidden <= 128:
             raise ModelError("Model must be 6 inputs, 0..128 hidden units, 3 outputs")
+        architecture = [6, hidden, 3] if hidden else [6, 3]
+        if metadata is not None and metadata.get("architecture", architecture) != architecture:
+            raise ModelError("Model metadata architecture differs from the numerical artifact")
         expected = 5 + 12 + (hidden * 6 + hidden if hidden else 0) + 3 * (hidden or 6) + 3
         if len(tokens) != expected:
             raise ModelError(f"Model numerical length mismatch: expected {expected}, got {len(tokens)}")

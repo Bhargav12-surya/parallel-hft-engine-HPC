@@ -6,6 +6,7 @@ while an available backend is required to execute correctly and match the oracle
 from dataclasses import replace
 import importlib.util
 import json
+from itertools import combinations
 from pathlib import Path
 import subprocess
 
@@ -77,20 +78,23 @@ def test_python_and_native_inference_weights_and_scaler_match(native_runner, tra
     ("sequential", "multi-single", ["cpu", "openmp"]),
     ("threaded", "multi-multi", ["cpu", "openmp"]),
     ("openmp", "multi-multi", ["cpu", "openmp"]),
-    ("hybrid", "multi-multi", ["cpu", "openmp"]),
     ("mpi", "multi-multi", ["cpu", "mpi"]),
     ("cuda", "multi-multi", ["cpu", "cuda"]),
-])
-def test_ai_replay_matches_sequential_oracle(native_runner, trained_models, tmp_path, engine, cpu_mode, components):
+] + [("hybrid", "multi-multi", list(parts)) for count in (2, 3, 4)
+     for parts in combinations(("cpu", "openmp", "mpi", "cuda"), count)])
+@pytest.mark.parametrize("kind", ["logistic", "mlp"])
+def test_ai_replay_matches_sequential_oracle(native_runner, trained_models, tmp_path, engine, cpu_mode, components, kind):
     capability = capabilities()
     if not engine_available(capability, engine):
         pytest.skip(f"{engine} hardware/build execution gate is unavailable")
-    if engine == "mpi" and not mpi_launcher():
+    if (engine == "mpi" or engine == "hybrid" and "mpi" in components) and not mpi_launcher():
         pytest.skip("MPI launcher is unavailable")
-    if engine == "hybrid" and not engine_available(capability, "openmp"):
-        pytest.skip("Hybrid cpu+openmp requires compiled OpenMP")
+    if engine == "hybrid":
+        for part in components:
+            if not engine_available(capability, "sequential" if part == "cpu" else part):
+                pytest.skip(f"Hybrid component {part} is unavailable")
     dataset, artifacts = trained_models
-    base = SimulationConfig(dataset=dataset, strategy="ai", model=artifacts["mlp"], threads=2,
+    base = SimulationConfig(dataset=dataset, strategy="ai", model=artifacts[kind], threads=2,
                             output_dir=tmp_path / "results")
     registry = ExperimentRegistry(tmp_path / "registry")
     expected = JobManager(registry).run(base)

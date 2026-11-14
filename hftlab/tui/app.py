@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import os
+import sqlite3
 import threading
 from functools import partial
 from pathlib import Path
@@ -39,7 +40,7 @@ from textual.widgets import (
     TabPane,
 )
 
-from hftlab import APP_NAME, __version__
+from hftlab import APP_NAME
 
 PAGES = (
     ("home", "⌂  Home"),
@@ -173,7 +174,7 @@ class HFTLabApp(App[None]):
     def _compose_home(self) -> Iterable[Any]:
         with VerticalScroll(id="home", classes="page"):
             yield Static(APP_NAME, classes="hero")
-            yield Static(f"TEAM-15", classes="subtitle")
+            yield Static("TEAM-15", classes="subtitle")
             yield Static("Detecting computing resources…", id="home-resources", classes="card")
             with Horizontal(classes="button-row"):
                 yield Button("→ New simulation", variant="primary", id="quick-sim")
@@ -551,13 +552,17 @@ class HFTLabApp(App[None]):
         message = str(exc) or type(exc).__name__
         self.notify(message, severity="error", timeout=8)
         self.query_one("#config-error", Static).update(message)
-        self.query_one("#status-line", Static).update(f"ERROR  •  {escape(message)}")
+        self._set_status(f"ERROR  •  {message}")
+
+    def _set_status(self, message: str) -> None:
+        for widget in self.query("#status-line"):
+            widget.update(escape(message))
 
     def _set_busy(self, busy: bool, label: str = "READY") -> None:
         self.busy = busy
         if not busy:
             self.active_operation = None
-        self.query_one("#status-line", Static).update(escape(label))
+        self._set_status(label)
         for key in ("run-simulation", "run-benchmark", "generate-data", "import-data", "train-model"):
             self.query_one(f"#{key}", Button).disabled = busy
 
@@ -857,7 +862,7 @@ class HFTLabApp(App[None]):
 
     def _training_progress(self, record: dict[str, Any]) -> None:
         self.query_one("#training-log", RichLog).write(render_json(record))
-        self.query_one("#status-line", Static).update(f"TRAINING  •  Epoch {record.get('epoch', '—')}  •  Validation loss {record.get('validation_loss', record.get('val_loss', '—'))}")
+        self._set_status(f"TRAINING  •  Epoch {record.get('epoch', '—')}  •  Validation loss {record.get('validation_loss', record.get('val_loss', '—'))}")
 
     def _training_finished(self, output: Path, value: dict[str, Any]) -> None:
         self._set_busy(False, "COMPLETED  •  Model trained and exported")
@@ -939,8 +944,9 @@ class HFTLabApp(App[None]):
 
             search = self._input("history-filter")
             self.experiment_rows = ExperimentRegistry().list(limit=100, search=search)
-        except (ImportError, OSError, ValueError):
+        except (ImportError, OSError, ValueError, sqlite3.Error) as exc:
             self.experiment_rows = []
+            self.notify(f"Could not load experiment history: {exc}", severity="error")
         self._render_history()
 
     def _render_history(self) -> None:
@@ -992,7 +998,7 @@ class HFTLabApp(App[None]):
             self.result = result
             self._render_results(result)
             self.show_page("results")
-        except (OSError, ValueError, KeyError, TypeError) as exc:
+        except (OSError, ValueError, KeyError, TypeError, sqlite3.Error) as exc:
             self._show_error(exc)
 
     @work(thread=True, group="diagnostics", exclusive=True, exit_on_error=False)

@@ -30,6 +30,8 @@ void hft_capabilities(void){
     printf("%s",__VERSION__);
 #endif
     printf("\"}\n");
+    /* Emit the protocol response before CUDA/driver process teardown. */
+    fflush(stdout);
 }
 int hft_result_write(const char *path,const HftConfig *config,const HftResult *r){
     size_t n=strlen(path);if(n>4096)return 0;

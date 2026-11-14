@@ -1,4 +1,6 @@
 from dataclasses import replace
+import csv
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -37,10 +39,15 @@ def test_engine_parity(native_capabilities, market, tmp_path, strategy):
     assert baseline["events_processed"] == 1200
     assert any(event.get("state") == "COMPLETED" for event in events)
     for engine, mode in [("threaded", "single-multi"), ("threaded", "multi-multi"),
-                         ("sequential", "multi-single"), ("openmp", "multi-multi"), ("hybrid", "multi-multi")]:
+                         ("sequential", "multi-single"), ("openmp", "multi-multi"), ("hybrid", "multi-multi"),
+                         ("mpi", "multi-multi"), ("cuda", "multi-multi")]:
         if not engine_available(native_capabilities, engine):
             continue
-        candidate = JobManager(registry).run(replace(config, engine=engine, cpu_mode=mode))
+        if engine == "mpi":
+            from hftlab.engines import mpi_launcher
+            if not mpi_launcher():
+                continue
+        candidate = JobManager(registry).run(replace(config, engine=engine, cpu_mode=mode, threads=2))
         assert compare_results(baseline, candidate)["passed"], (engine, strategy, baseline, candidate)
     assert len(registry.list()) >= 4
 
@@ -95,6 +102,47 @@ def test_binary_import_to_native_simulation(native_capabilities, market, tmp_pat
     imported = JobManager(registry).run(replace(config, dataset=binary))
     assert compare_results(reference, imported)["passed"]
     assert (Path(imported["output_dir"]) / "input.csv").is_file()
+
+
+@pytest.mark.native
+def test_accepted_csv_variants_replay_through_canonical_snapshot(native_capabilities, market, tmp_path):
+    with market.open(newline="", encoding="utf-8") as stream:
+        rows = list(csv.reader(stream))
+    variant = tmp_path / "quoted-bom-lowercase.csv"
+    with variant.open("w", newline="", encoding="utf-8-sig") as stream:
+        writer = csv.writer(stream, quoting=csv.QUOTE_ALL)
+        writer.writerow(rows[0])
+        writer.writerows([[value.lower() for value in row] for row in rows[1:]])
+    registry = ExperimentRegistry(tmp_path / "registry")
+    config = SimulationConfig(market, output_dir=tmp_path / "runs")
+    reference = JobManager(registry).run(config)
+    candidate = JobManager(registry).run(replace(config, dataset=variant))
+    assert compare_results(reference, candidate)["passed"]
+    assert Path(candidate["output_dir"], "input.csv").read_bytes() == market.read_bytes()
+    profiling = candidate["profiling"]
+    for key in ("cuda_h2d_seconds", "cuda_kernel_seconds", "cuda_d2h_seconds",
+                "mpi_communication_seconds", "bytes_transferred", "feature_seconds"):
+        assert profiling[key] is None, key
+
+
+@pytest.mark.native
+@pytest.mark.parametrize("flag", ["--fee-bps", "--max-loss", "--latency-ns", "--slippage-ticks"])
+def test_native_empty_numeric_argument_is_rejected(native_capabilities, flag):
+    completed = subprocess.run([str(find_runner()), flag, ""], capture_output=True, text=True, timeout=15)
+    assert completed.returncode == 2
+    assert "outside supported range" in completed.stdout
+
+
+@pytest.mark.native
+def test_native_oversized_model_header_is_rejected(native_capabilities, tmp_path):
+    model = tmp_path / "bad.hftmodel"
+    model.write_text("HFTMODEL 1 6 " + "9" * 1000 + " 3\n", encoding="utf-8")
+    features = tmp_path / "features.txt"
+    features.write_text("0 0 0 0 0 0\n", encoding="utf-8")
+    completed = subprocess.run([str(find_runner()), "--infer", "--model", str(model), "--features", str(features)],
+                               capture_output=True, text=True, timeout=15)
+    assert completed.returncode == 2
+    assert "Invalid native model" in completed.stdout
 
 
 def test_command_has_no_shell_interpolation(tmp_path):

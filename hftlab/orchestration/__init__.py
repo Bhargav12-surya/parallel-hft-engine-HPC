@@ -88,6 +88,8 @@ class JobManager:
         self._process = None
         self.last_experiment_id = None
         callback_error = None
+        reader: threading.Thread | None = None
+        reader_stop = threading.Event()
 
         def emit(event: dict) -> None:
             nonlocal callback_error
@@ -160,7 +162,7 @@ class JobManager:
                                 events.put(line, timeout=.2)
                                 break
                             except queue.Full:
-                                if self._cancel.is_set():
+                                if reader_stop.is_set() or self._cancel.is_set():
                                     return
                 finally:
                     try:
@@ -240,6 +242,9 @@ class JobManager:
                 self.registry.save(manifest)
             raise
         finally:
+            reader_stop.set()
+            if reader is not None:
+                reader.join(timeout=2)
             if self._process and self._process.stdout:
                 self._process.stdout.close()
             self._lock.release()

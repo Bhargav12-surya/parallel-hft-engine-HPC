@@ -9,7 +9,6 @@ import csv
 import hashlib
 import json
 import math
-import os
 from pathlib import Path
 import random
 import sqlite3
@@ -18,7 +17,7 @@ import tempfile
 from collections import Counter, deque
 from typing import Iterator
 
-from hftlab.utilities import atomic_json as _atomic_json, temporary_path
+from hftlab.utilities import atomic_json as _atomic_json, replace_file, temporary_path
 
 EVENT_FIELDS = ("event_id", "timestamp_ns", "instrument_id", "event_type", "side",
                 "price_ticks", "quantity", "order_id", "reference_order_id")
@@ -269,9 +268,11 @@ def generate_dataset(path: str | Path, events: int = 10000, instruments: int = 4
                 local_time = index / max(instruments, 1)
                 intraday = 0.65 + 0.7 * abs(math.cos(math.pi * index / max(events, 1)))
                 interval = rng.expovariate(intensity * intraday) * 1e9
-                if not math.isfinite(interval) or interval > MAX_INTEGER - timestamp:
+                if not math.isfinite(interval):
                     raise DatasetError("Generated timestamp exceeds the native integer range")
                 timestamp += max(1, int(interval))
+                if timestamp > MAX_INTEGER:
+                    raise DatasetError("Generated timestamp exceeds the native integer range")
                 innovation = math.sqrt(correlation) * common + math.sqrt(1 - correlation) * rng.gauss(0, 1)
                 regime = 1.8 if (index // max(128, instruments * 32)) % 3 == 1 else 0.8
                 movement = volatility * scale * regime * innovation
@@ -321,7 +322,7 @@ def generate_dataset(path: str | Path, events: int = 10000, instruments: int = 4
                                              side, price, quantity, event_order, reference)))
                 writer.writerow(row)
                 kinds[kind] += 1
-        os.replace(temporary, destination)
+        replace_file(temporary, destination)
     except BaseException:
         temporary.unlink(missing_ok=True)
         raise
@@ -356,7 +357,7 @@ def import_dataset(source: str | Path, destination: str | Path) -> dict:
                 writer = csv.DictWriter(handle, fieldnames=EVENT_FIELDS, lineterminator="\n")
                 writer.writeheader()
                 writer.writerows(iter_events(source_path))
-            os.replace(temporary, output_path)
+            replace_file(temporary, output_path)
         except BaseException:
             temporary.unlink(missing_ok=True)
             raise
@@ -388,7 +389,7 @@ def export_binary(source: str | Path, destination: str | Path) -> dict:
                 count += 1
             handle.seek(0)
             handle.write(_HEADER.pack(_MAGIC, 1, _RECORD.size, count, digest.digest()))
-        os.replace(temporary, output)
+        replace_file(temporary, output)
     except BaseException:
         temporary.unlink(missing_ok=True)
         raise
